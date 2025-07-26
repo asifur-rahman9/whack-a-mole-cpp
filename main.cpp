@@ -166,7 +166,7 @@ const char* getTexturedFragmentShaderSource()
                 "void main()"
                 "{"
                 "   vec4 textureColor = texture(textureSampler, vertexUV);"
-                "   FragColor = textureColor * vec4(vertexColor.r, vertexColor.g, vertexColor.b, 1.0f);"
+                "   FragColor = textureColor; "
                 "}";
 }
 
@@ -401,13 +401,28 @@ int main(int argc, char *argv[])
     float forearmAngle = 0.0f; // relative to bicep
     float bicepLength = 20.0f;
     float forearmLength = 10.0f;
+    float baseRotation = 0.0f; // rotation around Y-axis
 
 
     // parameters for our target cube
     bool newCube = false;
-    float cubeX = 5.f;
-    float cubeY = 1.f;
+    float cubeX = 5.f; // this is our displacement
+    float cubeY = 3.f;
+    float cubeRad = 25.f;
+    float cubeRot = 0.0f;
     float cubeZ = 25.f;
+
+    int points = 0;
+
+    // variables to keep track of passage of time for cube
+    auto now = chrono::system_clock::now();
+    auto duration = now.time_since_epoch();
+    auto milliseconds = chrono::duration_cast<chrono::milliseconds>(
+                                duration)
+                                .count();
+    unsigned long millis = (unsigned long)milliseconds;
+    unsigned long reset = 10000; //10,000 milliseconds = 10 seconds
+    unsigned long baseTime = millis;
 
 
     // Entering Main Loop
@@ -421,12 +436,22 @@ int main(int argc, char *argv[])
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // keeping track of time for adjustment with time purposes
-        auto now = chrono::system_clock::now();
-        auto duration = now.time_since_epoch();
-        auto milliseconds = chrono::duration_cast<chrono::milliseconds>(
+        now = chrono::system_clock::now();
+        duration = now.time_since_epoch();
+        milliseconds = chrono::duration_cast<chrono::milliseconds>(
                                 duration)
                                 .count();
-        unsigned long millis = (unsigned long)milliseconds;
+        millis = (unsigned long)milliseconds;
+        if(millis - baseTime > reset){
+            newCube = true;
+            baseTime = millis;
+            cout << "new cube pos!" << endl;
+
+        }
+
+        if((millis - baseTime) % 1000 < 15){
+            cout << "time to cube move: " << 10 - ((millis - baseTime) / 1000)   << endl;
+        }
 
 
         // Enable our texture shader program, set the texture location, bind the brick texture
@@ -446,47 +471,76 @@ int main(int argc, char *argv[])
 
         // draw bicep base
         glBindTexture(GL_TEXTURE_2D, cementTextureID);
-        mat4 baseMatrix = translate(mat4(1.0f), vec3(5.0f, 1.f, 5.0f)) * rotate(mat4(1.0f), radians(180.0f), vec3(0.0f, 1.0f, 0.0f)) * scale(mat4(1.0f), vec3(2.1f, 2.1f, 2.1f));
+        mat4 baseMatrix = translate(mat4(1.0f), vec3(5.0f, 1.f, 5.0f)) * rotate(mat4(1.0f), radians(baseRotation + 180.0f), vec3(0.0f, 1.0f, 0.0f)) * scale(mat4(1.0f), vec3(2.1f, 2.1f, 2.1f));
         setWorldMatrix(texturedShaderProgram, baseMatrix);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        // Create base rotation matrix for all arm components
+        mat4 baseRotationMatrix = rotate(mat4(1.0f), radians(baseRotation), vec3(0.0f, 1.0f, 0.0f));
 
         // Draw bicep
         // translate in z sin(rotation)
         // translate in y cos(rotation)
-        mat4 bicepMatrix = translate(mat4(1.0f), vec3(5.0f, bicepLength / 2 * cos(radians(bicepAngle)), 5.0f + bicepLength / 2 * sin(radians(bicepAngle)))) * rotate(mat4(1.0f), radians(bicepAngle), vec3(1.0f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(1.0f, bicepLength, 1.0f));
+        vec3 bicepLocalPos = vec3(0.0f, bicepLength / 2 * cos(radians(bicepAngle)), bicepLength / 2 * sin(radians(bicepAngle)));
+        vec3 bicepWorldPos = vec3(baseRotationMatrix * vec4(bicepLocalPos, 1.0f)) + vec3(5.0f, 0.0f, 5.0f);
+        mat4 bicepMatrix = translate(mat4(1.0f), bicepWorldPos) * baseRotationMatrix * rotate(mat4(1.0f), radians(bicepAngle), vec3(1.0f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(1.0f, bicepLength, 1.0f));
         setWorldMatrix(texturedShaderProgram, bicepMatrix);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
         // Draw the joint, angle following bicep angle
         float jointHeight = bicepLength * cos(radians(bicepAngle));
         float jointHorizontal = bicepLength * sin(radians(bicepAngle));
-        vec3 jointPos = vec3(5.0f, jointHeight, 5.0f + jointHorizontal);
-        mat4 hingeMatrix = translate(mat4(1.0f), vec3(5.0f, jointHeight, 5.0f + jointHorizontal)) * rotate(mat4(1.0f), radians(forearmAngle + bicepAngle), vec3(1.0f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(2.1f, 2.1f, 2.1f));
+        vec3 jointLocalPos = vec3(0.0f, jointHeight, jointHorizontal);
+        vec3 jointWorldPos = vec3(baseRotationMatrix * vec4(jointLocalPos, 1.0f)) + vec3(5.0f, 0.0f, 5.0f);
+        mat4 hingeMatrix = translate(mat4(1.0f), jointWorldPos) * baseRotationMatrix * rotate(mat4(1.0f), radians(forearmAngle + bicepAngle), vec3(1.0f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(2.1f, 2.1f, 2.1f));
         setWorldMatrix(texturedShaderProgram, hingeMatrix);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        // Calculate forarm angle and draw
+        // Calculate forearm angle and draw
         float totalAngle = forearmAngle + bicepAngle;
-        mat4 foreArmMatrix = translate(mat4(1.0f), vec3(5.0f, forearmLength / 2 * cos(radians(totalAngle)) + jointHeight, 5.0f + jointHorizontal + forearmLength / 2 * sin(radians(totalAngle)))) * rotate(mat4(1.0f), radians(totalAngle), vec3(1.0f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(1.0f, forearmLength, 1.0f));
+        vec3 forearmLocalPos = vec3(0.0f, forearmLength / 2 * cos(radians(totalAngle)) + jointHeight, jointHorizontal + forearmLength / 2 * sin(radians(totalAngle)));
+        vec3 forearmWorldPos = vec3(baseRotationMatrix * vec4(forearmLocalPos, 1.0f)) + vec3(5.0f, 0.0f, 5.0f);
+        mat4 foreArmMatrix = translate(mat4(1.0f), forearmWorldPos) * baseRotationMatrix * rotate(mat4(1.0f), radians(totalAngle), vec3(1.0f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(1.0f, forearmLength, 1.0f));
         setWorldMatrix(texturedShaderProgram, foreArmMatrix);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        // Calculate forarm angle and draw
-        //float totalAngle = forearmAngle + bicepAngle;
-        mat4 hammerMatrix = translate(mat4(1.0f), vec3(5.0f, forearmLength * cos(radians(totalAngle)) + jointHeight, 5.0f + jointHorizontal + forearmLength * sin(radians(totalAngle)))) * rotate(mat4(1.0f), radians(totalAngle), vec3(1.0f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 8.0f));
+        // Calculate hammer position and draw
+        vec3 hammerLocalPos = vec3(0.0f, forearmLength * cos(radians(totalAngle)) + jointHeight, jointHorizontal + forearmLength * sin(radians(totalAngle)));
+        vec3 hammerWorldPos = vec3(baseRotationMatrix * vec4(hammerLocalPos, 1.0f)) + vec3(5.0f, 0.0f, 5.0f);
+        mat4 hammerMatrix = translate(mat4(1.0f), hammerWorldPos) * baseRotationMatrix * rotate(mat4(1.0f), radians(totalAngle), vec3(1.0f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 8.0f));
         setWorldMatrix(texturedShaderProgram, hammerMatrix);
         glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        
 
 
 
         // calcualte new cube position if necessary
+        if(newCube == true){
+            // choose new cube position
+            cubeRad = (rand() % 2) + 16;
+            cubeRot = rand() % 360;
+            newCube = false;
+            // reset the timer
+           
+        }
         // draw cube
-        mat4 cubeMatrix = translate(mat4(1.0f), vec3(cubeX, cubeY, cubeZ)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 2.0f));
+        vec3 cubePosition = vec3(cubeX + (cubeRad * sin(cubeRot)), cubeY, cubeRad * cos(cubeRot));
+        mat4 cubeMatrix = translate(mat4(1.0f), cubePosition) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 2.0f));
         setWorldMatrix(texturedShaderProgram, cubeMatrix);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
         //calcuate distance from hammer to cube
-        
+        float distanceX = abs(hammerWorldPos.x - cubePosition.x);
+        float distanceY = abs(hammerWorldPos.y - cubePosition.y);
+        float distanceZ = abs(hammerWorldPos.z - cubePosition.z);
+        if(distanceX < 8.0f * sin(baseRotation) & distanceY < 3.0f & distanceZ < 8.0f * cos(baseRotation)){
+            cout << "you got it!" << endl;
+            newCube = true;
+            baseTime = millis;
+            points = points + 1;
+            cout << "you now have " << points << " points!" << endl;
+        }
 
 
 
@@ -575,26 +629,40 @@ int main(int argc, char *argv[])
         {
 
             if (bicepAngle > -50.0)
-                bicepAngle = bicepAngle - 0.1;
+                bicepAngle = bicepAngle - 0.7;
         }
 
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) // move robot bicep to the right
         {
             if (bicepAngle < 50.0)
-                bicepAngle = bicepAngle + 0.1;
+                bicepAngle = bicepAngle + 0.7;
         }
 
         if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) // move firearm up/to the left
         {
-            if (forearmAngle > -110)
-                forearmAngle += -0.1;
+            if (forearmAngle > -140)
+                forearmAngle += -1.0f;
         }
 
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) // move forearm down/to the right
         {
-            if (forearmAngle < 110)
-                forearmAngle += 0.1;
+            if (forearmAngle < 140)
+                forearmAngle += 1.0f;
         }
+        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // rotate base left
+        {
+            baseRotation -= 1.0f;
+            if (baseRotation < -360.0f)
+                baseRotation += 360.0f;
+        }
+
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // rotate base right
+        {
+            baseRotation += 1.0f;
+            if (baseRotation > 360.0f)
+                baseRotation -= 360.0f;
+        }
+
 
 
         // Set the view matrix for first person
@@ -614,6 +682,7 @@ int main(int argc, char *argv[])
         }
         lastMouseLeftState = glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT);
     }
+    cout << "your total points: " << points << "!!" << endl;
 
     // Shutdown GLFW
     glfwTerminate();
