@@ -330,7 +330,11 @@ int main(int argc, char *argv[])
 
     // Load Textures
     GLuint brickTextureID = loadTexture("Textures/brick.jpg");
-    GLuint cementTextureID = loadTexture("Textures/cement.jpg");
+    GLuint grassTextureID = loadTexture("Textures/image.png");
+    GLuint woodTextureID = loadTexture("Textures/wood.png");
+    GLuint cementTextureID = loadTexture("Textures/cement.png");
+    GLuint cement0TextureID = loadTexture("Textures/cement0.png");
+    GLuint metalTextureID = loadTexture("Textures/metal.png");
 
     // Black background
     glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
@@ -405,12 +409,12 @@ int main(int argc, char *argv[])
 
 
     // parameters for our target cube
-    bool newCube = false;
+    bool newCube = true;
     float cubeX = 5.f; // this is our displacement
-    float cubeY = 3.f;
+    float cubeY = 5.f;
     float cubeRad = 25.f;
     float cubeRot = 0.0f;
-    float cubeZ = 25.f;
+    //float cubeZ = 25.f;
 
     int points = 0;
 
@@ -458,7 +462,7 @@ int main(int argc, char *argv[])
         glUseProgram(texturedShaderProgram);
         glActiveTexture(GL_TEXTURE0);
         GLuint textureLocation = glGetUniformLocation(texturedShaderProgram, "textureSampler");
-        glBindTexture(GL_TEXTURE_2D, brickTextureID);
+        glBindTexture(GL_TEXTURE_2D, grassTextureID);
         glUniform1i(textureLocation, 0);                // Set our Texture sampler to user Texture Unit 0
 
         // Bind the appropriate VAO
@@ -471,8 +475,14 @@ int main(int argc, char *argv[])
 
         // draw bicep base
         glBindTexture(GL_TEXTURE_2D, cementTextureID);
-        mat4 baseMatrix = translate(mat4(1.0f), vec3(5.0f, 1.f, 5.0f)) * rotate(mat4(1.0f), radians(baseRotation + 180.0f), vec3(0.0f, 1.0f, 0.0f)) * scale(mat4(1.0f), vec3(2.1f, 2.1f, 2.1f));
+        mat4 baseMatrix = translate(mat4(1.0f), vec3(5.0f, 1.f, 5.0f)) * rotate(mat4(1.0f), radians(baseRotation + 180.0f), vec3(0.0f, 1.0f, 0.0f)) * scale(mat4(1.0f), vec3(4.1f, 2.4f, 4.1f));
         setWorldMatrix(texturedShaderProgram, baseMatrix);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        // draw larger fixed base
+        glBindTexture(GL_TEXTURE_2D, cement0TextureID);
+        mat4 bigBaseMatrix = translate(mat4(1.0f), vec3(5.0f, 1.f, 5.0f))  * scale(mat4(1.0f), vec3(6.1f, 1.6f, 6.1f));
+        setWorldMatrix(texturedShaderProgram, bigBaseMatrix);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
         // Create base rotation matrix for all arm components
@@ -481,6 +491,7 @@ int main(int argc, char *argv[])
         // Draw bicep
         // translate in z sin(rotation)
         // translate in y cos(rotation)
+        glBindTexture(GL_TEXTURE_2D, woodTextureID);
         vec3 bicepLocalPos = vec3(0.0f, bicepLength / 2 * cos(radians(bicepAngle)), bicepLength / 2 * sin(radians(bicepAngle)));
         vec3 bicepWorldPos = vec3(baseRotationMatrix * vec4(bicepLocalPos, 1.0f)) + vec3(5.0f, 0.0f, 5.0f);
         mat4 bicepMatrix = translate(mat4(1.0f), bicepWorldPos) * baseRotationMatrix * rotate(mat4(1.0f), radians(bicepAngle), vec3(1.0f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(1.0f, bicepLength, 1.0f));
@@ -505,6 +516,7 @@ int main(int argc, char *argv[])
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
         // Calculate hammer position and draw
+        glBindTexture(GL_TEXTURE_2D, metalTextureID);
         vec3 hammerLocalPos = vec3(0.0f, forearmLength * cos(radians(totalAngle)) + jointHeight, jointHorizontal + forearmLength * sin(radians(totalAngle)));
         vec3 hammerWorldPos = vec3(baseRotationMatrix * vec4(hammerLocalPos, 1.0f)) + vec3(5.0f, 0.0f, 5.0f);
         mat4 hammerMatrix = translate(mat4(1.0f), hammerWorldPos) * baseRotationMatrix * rotate(mat4(1.0f), radians(totalAngle), vec3(1.0f, 0.0f, 0.0f)) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 8.0f));
@@ -520,6 +532,7 @@ int main(int argc, char *argv[])
             // choose new cube position
             cubeRad = (rand() % 2) + 16;
             cubeRot = rand() % 360;
+            cubeY = rand() % 5 + 4;
             newCube = false;
             // reset the timer
            
@@ -534,7 +547,7 @@ int main(int argc, char *argv[])
         float distanceX = abs(hammerWorldPos.x - cubePosition.x);
         float distanceY = abs(hammerWorldPos.y - cubePosition.y);
         float distanceZ = abs(hammerWorldPos.z - cubePosition.z);
-        if(distanceX < 8.0f * sin(baseRotation) & distanceY < 3.0f & distanceZ < 8.0f * cos(baseRotation)){
+        if(distanceX < (4.0f * sin(baseRotation) + 1) & distanceY < 4.0f & distanceZ < (4.0f * cos(baseRotation) + 1)){
             cout << "you got it!" << endl;
             newCube = true;
             baseTime = millis;
@@ -628,13 +641,13 @@ int main(int argc, char *argv[])
         if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) // move robot bicep to the left
         {
 
-            if (bicepAngle > -50.0)
+            if (bicepAngle > -45.0)
                 bicepAngle = bicepAngle - 0.7;
         }
 
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) // move robot bicep to the right
         {
-            if (bicepAngle < 50.0)
+            if (bicepAngle < 45.0)
                 bicepAngle = bicepAngle + 0.7;
         }
 
@@ -709,8 +722,10 @@ GLuint loadTexture(const char *filename){
     glBindTexture(GL_TEXTURE_2D, textureId);
 
     //set filter parameters
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
     //upload texture to PU
     GLenum format = 0;
@@ -721,7 +736,7 @@ GLuint loadTexture(const char *filename){
     else if(nbChannels == 4)
         format = GL_RGBA;
     glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
-
+    glGenerateMipmap(GL_TEXTURE_2D);
 
     //free resource
     stbi_image_free(data);
