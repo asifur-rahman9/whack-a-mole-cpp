@@ -1,102 +1,120 @@
 
-// Macro commands and imports
+// Standard library includes
 #include <iostream>
-#include <list>
+#include <chrono>
+#include <cstdlib>
+#include <cassert>
 
-#define GLEW_STATIC 1 
-#include <GL/glew.h>  
+// OpenGL includes
+#define GLEW_STATIC 1
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
 
-#include <GLFW/glfw3.h> 
-
-#include <glm/glm.hpp>                  
-#include <glm/gtc/matrix_transform.hpp> 
+// Math library includes
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 #include <glm/common.hpp>
 
+// Image loading
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb/stb_image.h>
 
-//using relevant namespaces
+// Using statements
 using namespace glm;
 using namespace std;
 
-
+// Constants
+const int WINDOW_WIDTH = 800;
+const int WINDOW_HEIGHT = 600;
+const float CAMERA_SPEED = 5.0f;
+const float CAMERA_FAST_SPEED_MULTIPLIER = 2.0f;
+const float CAMERA_ANGULAR_SPEED = 6.0f;
+const float FIELD_OF_VIEW = 70.0f;
+const float NEAR_PLANE = 0.01f;
+const float FAR_PLANE = 100.0f;
+const float BICEP_LENGTH = 20.0f;
+const float FOREARM_LENGTH = 10.0f;
+const float ARM_ROTATION_SPEED = 0.7f;
+const float FOREARM_ROTATION_SPEED = 1.0f;
+const float BASE_ROTATION_SPEED = 1.0f;
+const unsigned long CUBE_RESET_TIME_MS = 10000; // 10 seconds
+const int MIN_CUBE_RADIUS = 16;
+const int MAX_CUBE_RADIUS = 18;
+const int MIN_CUBE_HEIGHT = 4;
+const int MAX_CUBE_HEIGHT = 9;
 
 // Declaring our functions and structs
 GLuint loadTexture(const char *filename);
 
-const char* getVertexShaderSource();
+const char *getVertexShaderSource();
 
-const char* getFragmentShaderSource();
+const char *getFragmentShaderSource();
 
-const char* getTexturedVertexShaderSource();
+const char *getTexturedVertexShaderSource();
 
-const char* getTexturedFragmentShaderSource();
+const char *getTexturedFragmentShaderSource();
 
-int compileAndLinkShaders(const char* vertexShaderSource, const char* fragmentShaderSource);
-
+int compileAndLinkShaders(const char *vertexShaderSource, const char *fragmentShaderSource);
 
 struct TexturedColoredVertex
 {
     TexturedColoredVertex(vec3 _position, vec3 _color, vec2 _uv)
-    : position(_position), color(_color), uv(_uv) {}
-    
+        : position(_position), color(_color), uv(_uv) {}
+
     vec3 position;
     vec3 color;
     vec2 uv;
 };
 
-
-
 // Textured Cube model with position, color, and UV coordinates
-const TexturedColoredVertex texturedCubeVertexArray[] = {  // position,                            color
-    TexturedColoredVertex(vec3(-0.5f,-0.5f,-0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 0.0f)), //left - red
-    TexturedColoredVertex(vec3(-0.5f,-0.5f, 0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 1.0f)),
+const TexturedColoredVertex texturedCubeVertexArray[] = {                                       // position,                            color
+    TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 0.0f)), // left - red
+    TexturedColoredVertex(vec3(-0.5f, -0.5f, 0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 1.0f)),
     TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(1.0f, 1.0f)),
-    
-    TexturedColoredVertex(vec3(-0.5f,-0.5f,-0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 0.0f)),
+
+    TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 0.0f)),
     TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(1.0f, 1.0f)),
-    TexturedColoredVertex(vec3(-0.5f, 0.5f,-0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(1.0f, 0.0f)),
-    
-    TexturedColoredVertex(vec3( 0.5f, 0.5f,-0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f)), // far - blue
-    TexturedColoredVertex(vec3(-0.5f,-0.5f,-0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f)),
-    TexturedColoredVertex(vec3(-0.5f, 0.5f,-0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f)),
-    
-    TexturedColoredVertex(vec3( 0.5f, 0.5f,-0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f)),
-    TexturedColoredVertex(vec3( 0.5f,-0.5f,-0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 0.0f)),
-    TexturedColoredVertex(vec3(-0.5f,-0.5f,-0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f)),
-    
-    TexturedColoredVertex(vec3( 0.5f,-0.5f, 0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(1.0f, 1.0f)), // bottom - turquoise
-    TexturedColoredVertex(vec3(-0.5f,-0.5f,-0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f)),
-    TexturedColoredVertex(vec3( 0.5f,-0.5f,-0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f)),
-    
-    TexturedColoredVertex(vec3( 0.5f,-0.5f, 0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(1.0f, 1.0f)),
-    TexturedColoredVertex(vec3(-0.5f,-0.5f, 0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(0.0f, 1.0f)),
-    TexturedColoredVertex(vec3(-0.5f,-0.5f,-0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f)),
-    
+    TexturedColoredVertex(vec3(-0.5f, 0.5f, -0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(1.0f, 0.0f)),
+
+    TexturedColoredVertex(vec3(0.5f, 0.5f, -0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f)), // far - blue
+    TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f)),
+    TexturedColoredVertex(vec3(-0.5f, 0.5f, -0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f)),
+
+    TexturedColoredVertex(vec3(0.5f, 0.5f, -0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f)),
+    TexturedColoredVertex(vec3(0.5f, -0.5f, -0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 0.0f)),
+    TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f)),
+
+    TexturedColoredVertex(vec3(0.5f, -0.5f, 0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(1.0f, 1.0f)), // bottom - turquoise
+    TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f)),
+    TexturedColoredVertex(vec3(0.5f, -0.5f, -0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f)),
+
+    TexturedColoredVertex(vec3(0.5f, -0.5f, 0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(1.0f, 1.0f)),
+    TexturedColoredVertex(vec3(-0.5f, -0.5f, 0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(0.0f, 1.0f)),
+    TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f)),
+
     TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(0.0f, 1.0f)), // near - green
-    TexturedColoredVertex(vec3(-0.5f,-0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(0.0f, 0.0f)),
-    TexturedColoredVertex(vec3( 0.5f,-0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(1.0f, 0.0f)),
-    
-    TexturedColoredVertex(vec3( 0.5f, 0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(1.0f, 1.0f)),
+    TexturedColoredVertex(vec3(-0.5f, -0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(0.0f, 0.0f)),
+    TexturedColoredVertex(vec3(0.5f, -0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(1.0f, 0.0f)),
+
+    TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(1.0f, 1.0f)),
     TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(0.0f, 1.0f)),
-    TexturedColoredVertex(vec3( 0.5f,-0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(1.0f, 0.0f)),
-    
-    TexturedColoredVertex(vec3( 0.5f, 0.5f, 0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f)), // right - purple
-    TexturedColoredVertex(vec3( 0.5f,-0.5f,-0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f)),
-    TexturedColoredVertex(vec3( 0.5f, 0.5f,-0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(1.0f, 0.0f)),
-    
-    TexturedColoredVertex(vec3( 0.5f,-0.5f,-0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f)),
-    TexturedColoredVertex(vec3( 0.5f, 0.5f, 0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f)),
-    TexturedColoredVertex(vec3( 0.5f,-0.5f, 0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f)),
-    
-    TexturedColoredVertex(vec3( 0.5f, 0.5f, 0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(1.0f, 1.0f)), // top - yellow
-    TexturedColoredVertex(vec3( 0.5f, 0.5f,-0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(1.0f, 0.0f)),
-    TexturedColoredVertex(vec3(-0.5f, 0.5f,-0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(0.0f, 0.0f)),
-    
-    TexturedColoredVertex(vec3( 0.5f, 0.5f, 0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(1.0f, 1.0f)),
-    TexturedColoredVertex(vec3(-0.5f, 0.5f,-0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(0.0f, 0.0f)),
-    TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(0.0f, 1.0f))
-};
+    TexturedColoredVertex(vec3(0.5f, -0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(1.0f, 0.0f)),
+
+    TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f)), // right - purple
+    TexturedColoredVertex(vec3(0.5f, -0.5f, -0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f)),
+    TexturedColoredVertex(vec3(0.5f, 0.5f, -0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(1.0f, 0.0f)),
+
+    TexturedColoredVertex(vec3(0.5f, -0.5f, -0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f)),
+    TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f)),
+    TexturedColoredVertex(vec3(0.5f, -0.5f, 0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f)),
+
+    TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(1.0f, 1.0f)), // top - yellow
+    TexturedColoredVertex(vec3(0.5f, 0.5f, -0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(1.0f, 0.0f)),
+    TexturedColoredVertex(vec3(-0.5f, 0.5f, -0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(0.0f, 0.0f)),
+
+    TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(1.0f, 1.0f)),
+    TexturedColoredVertex(vec3(-0.5f, 0.5f, -0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(0.0f, 0.0f)),
+    TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(0.0f, 1.0f))};
 
 // String version of vertex shader
 const char *getVertexShaderSource()
@@ -130,48 +148,46 @@ const char *getFragmentShaderSource()
            "}";
 }
 // string version of textured shader with UV coordinates
-const char* getTexturedVertexShaderSource()
+const char *getTexturedVertexShaderSource()
 {
-        return
-                "#version 330 core\n"
-                "layout (location = 0) in vec3 aPos;"
-                "layout (location = 1) in vec3 aColor;"
-                "layout (location = 2) in vec2 aUV;"
-                ""
-                "uniform mat4 worldMatrix;"
-                "uniform mat4 viewMatrix = mat4(1.0);"  // default value for view matrix (identity)
-                "uniform mat4 projectionMatrix = mat4(1.0);"
-                ""
-                "out vec3 vertexColor;"
-                "out vec2 vertexUV;"
-                "void main()"
-                "{"
-                "   vertexColor = aColor;"
-                "   mat4 modelViewProjection = projectionMatrix * viewMatrix * worldMatrix;"
-                "   gl_Position = modelViewProjection * vec4(aPos.x, aPos.y, aPos.z, 1.0);"
-                "   vertexUV = aUV;"
-                "}";
+    return "#version 330 core\n"
+           "layout (location = 0) in vec3 aPos;"
+           "layout (location = 1) in vec3 aColor;"
+           "layout (location = 2) in vec2 aUV;"
+           ""
+           "uniform mat4 worldMatrix;"
+           "uniform mat4 viewMatrix = mat4(1.0);" // default value for view matrix (identity)
+           "uniform mat4 projectionMatrix = mat4(1.0);"
+           ""
+           "out vec3 vertexColor;"
+           "out vec2 vertexUV;"
+           "void main()"
+           "{"
+           "   vertexColor = aColor;"
+           "   mat4 modelViewProjection = projectionMatrix * viewMatrix * worldMatrix;"
+           "   gl_Position = modelViewProjection * vec4(aPos.x, aPos.y, aPos.z, 1.0);"
+           "   vertexUV = aUV;"
+           "}";
 }
 
 //  string version of textured vertex shader with UV coordinates
-const char* getTexturedFragmentShaderSource()
+const char *getTexturedFragmentShaderSource()
 {
-    return
-                "#version 330 core\n"
-                "in vec3 vertexColor;"
-                "in vec2 vertexUV;"
-                "uniform sampler2D textureSampler;"
-                ""
-                "out vec4 FragColor;"
-                "void main()"
-                "{"
-                "   vec4 textureColor = texture(textureSampler, vertexUV);"
-                "   FragColor = textureColor; "
-                "}";
+    return "#version 330 core\n"
+           "in vec3 vertexColor;"
+           "in vec2 vertexUV;"
+           "uniform sampler2D textureSampler;"
+           ""
+           "out vec4 FragColor;"
+           "void main()"
+           "{"
+           "   vec4 textureColor = texture(textureSampler, vertexUV);"
+           "   FragColor = textureColor; "
+           "}";
 }
 
 // compile and linking shaders
-int compileAndLinkShaders(const char* vertexShaderSource, const char* fragmentShaderSource)
+int compileAndLinkShaders(const char *vertexShaderSource, const char *fragmentShaderSource)
 {
     // compile and link shader program
     // return shader program id
@@ -181,7 +197,7 @@ int compileAndLinkShaders(const char* vertexShaderSource, const char* fragmentSh
     int vertexShader = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
     glCompileShader(vertexShader);
-    
+
     // check for shader compile errors
     int success;
     char infoLog[512];
@@ -189,41 +205,44 @@ int compileAndLinkShaders(const char* vertexShaderSource, const char* fragmentSh
     if (!success)
     {
         glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
+        std::cerr << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n"
+                  << infoLog << std::endl;
     }
-    
+
     // fragment shader
     int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
     glCompileShader(fragmentShader);
-    
+
     // check for shader compile errors
     glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
     if (!success)
     {
         glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
+        std::cerr << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n"
+                  << infoLog << std::endl;
     }
-    
+
     // link shaders
     int shaderProgram = glCreateProgram();
     glAttachShader(shaderProgram, vertexShader);
     glAttachShader(shaderProgram, fragmentShader);
     glLinkProgram(shaderProgram);
-    
+
     // check for linking errors
     glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-    if (!success) {
+    if (!success)
+    {
         glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
+        std::cerr << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n"
+                  << infoLog << std::endl;
     }
-    
+
     glDeleteShader(vertexShader);
     glDeleteShader(fragmentShader);
-    
+
     return shaderProgram;
 }
-
 
 // creating the cube texture cube vertex array object
 int createTexturedCubeVertexArrayObject()
@@ -232,41 +251,40 @@ int createTexturedCubeVertexArrayObject()
     GLuint vertexArrayObject;
     glGenVertexArrays(1, &vertexArrayObject);
     glBindVertexArray(vertexArrayObject);
-    
+
     // Upload Vertex Buffer to the GPU, keep a reference to it (vertexBufferObject)
     GLuint vertexBufferObject;
     glGenBuffers(1, &vertexBufferObject);
     glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
     glBufferData(GL_ARRAY_BUFFER, sizeof(texturedCubeVertexArray), texturedCubeVertexArray, GL_STATIC_DRAW);
-    
-    glVertexAttribPointer(0,                   // attribute 0 matches aPos in Vertex Shader
-                          3,                   // size
-                          GL_FLOAT,            // type
-                          GL_FALSE,            // normalized?
+
+    glVertexAttribPointer(0,                             // attribute 0 matches aPos in Vertex Shader
+                          3,                             // size
+                          GL_FLOAT,                      // type
+                          GL_FALSE,                      // normalized?
                           sizeof(TexturedColoredVertex), // stride - each vertex contain 2 vec3 (position, color)
-                          (void*)0             // array buffer offset
-                          );
+                          (void *)0                      // array buffer offset
+    );
     glEnableVertexAttribArray(0);
-    
-    
-    glVertexAttribPointer(1,                            // attribute 1 matches aColor in Vertex Shader
+
+    glVertexAttribPointer(1, // attribute 1 matches aColor in Vertex Shader
                           3,
                           GL_FLOAT,
                           GL_FALSE,
                           sizeof(TexturedColoredVertex),
-                          (void*)sizeof(vec3)      // color is offseted a vec3 (comes after position)
-                          );
+                          (void *)sizeof(vec3) // color is offseted a vec3 (comes after position)
+    );
     glEnableVertexAttribArray(1);
-    
-    glVertexAttribPointer(2,                            // attribute 2 matches aUV in Vertex Shader
+
+    glVertexAttribPointer(2, // attribute 2 matches aUV in Vertex Shader
                           2,
                           GL_FLOAT,
                           GL_FALSE,
                           sizeof(TexturedColoredVertex),
-                          (void*)(2*sizeof(vec3))      // uv is offseted by 2 vec3 (comes after position and color)
-                          );
+                          (void *)(2 * sizeof(vec3)) // uv is offseted by 2 vec3 (comes after position and color)
+    );
     glEnableVertexAttribArray(2);
-    
+
     return vertexArrayObject;
 }
 
@@ -294,7 +312,6 @@ void setWorldMatrix(int shaderProgram, mat4 worldMatrix)
     glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &worldMatrix[0][0]);
 }
 
-
 // main function
 int main(int argc, char *argv[])
 {
@@ -306,8 +323,8 @@ int main(int argc, char *argv[])
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
     glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
 
-    // Create Window and rendering context using GLFW, resolution is 800x600
-    GLFWwindow *window = glfwCreateWindow(800, 600, "Project 1", NULL, NULL);
+    // Create Window and rendering context using GLFW
+    GLFWwindow *window = glfwCreateWindow(WINDOW_WIDTH, WINDOW_HEIGHT, "Project 1", NULL, NULL);
     if (window == NULL)
     {
         std::cerr << "Failed to create GLFW window" << std::endl;
@@ -352,8 +369,8 @@ int main(int argc, char *argv[])
     vec3 cameraUp(0.0f, 1.0f, 0.0f);
 
     // Other camera parameters
-    float cameraSpeed = 5.0f;
-    float cameraFastSpeed = 2 * cameraSpeed;
+    float cameraSpeed = CAMERA_SPEED;
+    float cameraFastSpeed = CAMERA_FAST_SPEED_MULTIPLIER * cameraSpeed;
     float cameraHorizontalAngle = 90.0f;
     float cameraVerticalAngle = 0.0f;
     bool cameraFirstPerson = true; // press 1 or 2 to toggle this variable
@@ -362,9 +379,9 @@ int main(int argc, char *argv[])
     float spinningCubeAngle = 0.0f;
 
     // Set projection matrix for shader, this won't change
-    mat4 projectionMatrix = glm::perspective(70.0f,           // field of view in degrees
-                                             800.0f / 600.0f, // aspect ratio
-                                             0.01f, 100.0f);  // near and far (near > 0)
+    mat4 projectionMatrix = glm::perspective(FIELD_OF_VIEW,                       // field of view in degrees
+                                             (float)WINDOW_WIDTH / WINDOW_HEIGHT, // aspect ratio
+                                             NEAR_PLANE, FAR_PLANE);              // near and far (near > 0)
 
     GLuint projectionMatrixLocation = glGetUniformLocation(colorShaderProgram, "projectionMatrix");
     glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
@@ -403,10 +420,9 @@ int main(int argc, char *argv[])
     // Parameters to control robotic arm
     float bicepAngle = 25.0f;  // relative to vertical
     float forearmAngle = 0.0f; // relative to bicep
-    float bicepLength = 20.0f;
-    float forearmLength = 10.0f;
+    float bicepLength = BICEP_LENGTH;
+    float forearmLength = FOREARM_LENGTH;
     float baseRotation = 0.0f; // rotation around Y-axis
-
 
     // parameters for our target cube
     bool newCube = true;
@@ -414,20 +430,17 @@ int main(int argc, char *argv[])
     float cubeY = 5.f;
     float cubeRad = 25.f;
     float cubeRot = 0.0f;
-    //float cubeZ = 25.f;
+    // float cubeZ = 25.f;
 
     int points = 0;
 
     // variables to keep track of passage of time for cube
-    auto now = chrono::system_clock::now();
+    auto now = std::chrono::system_clock::now();
     auto duration = now.time_since_epoch();
-    auto milliseconds = chrono::duration_cast<chrono::milliseconds>(
-                                duration)
-                                .count();
+    auto milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
     unsigned long millis = (unsigned long)milliseconds;
-    unsigned long reset = 10000; //10,000 milliseconds = 10 seconds
+    unsigned long reset = CUBE_RESET_TIME_MS;
     unsigned long baseTime = millis;
-
 
     // Entering Main Loop
     while (!glfwWindowShouldClose(window))
@@ -440,30 +453,28 @@ int main(int argc, char *argv[])
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // keeping track of time for adjustment with time purposes
-        now = chrono::system_clock::now();
+        now = std::chrono::system_clock::now();
         duration = now.time_since_epoch();
-        milliseconds = chrono::duration_cast<chrono::milliseconds>(
-                                duration)
-                                .count();
+        milliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(duration).count();
         millis = (unsigned long)milliseconds;
-        if(millis - baseTime > reset){
+        if (millis - baseTime > reset)
+        {
             newCube = true;
             baseTime = millis;
             cout << "new cube pos!" << endl;
-
         }
 
-        if((millis - baseTime) % 1000 < 15){
-            cout << "time to cube move: " << 10 - ((millis - baseTime) / 1000)   << endl;
+        if ((millis - baseTime) % 1000 < 15)
+        {
+            cout << "time to cube move: " << 10 - ((millis - baseTime) / 1000) << endl;
         }
-
 
         // Enable our texture shader program, set the texture location, bind the brick texture
         glUseProgram(texturedShaderProgram);
         glActiveTexture(GL_TEXTURE0);
         GLuint textureLocation = glGetUniformLocation(texturedShaderProgram, "textureSampler");
         glBindTexture(GL_TEXTURE_2D, grassTextureID);
-        glUniform1i(textureLocation, 0);                // Set our Texture sampler to user Texture Unit 0
+        glUniform1i(textureLocation, 0); // Set our Texture sampler to user Texture Unit 0
 
         // Bind the appropriate VAO
         glBindVertexArray(vao);
@@ -481,7 +492,7 @@ int main(int argc, char *argv[])
 
         // draw larger fixed base
         glBindTexture(GL_TEXTURE_2D, cement0TextureID);
-        mat4 bigBaseMatrix = translate(mat4(1.0f), vec3(5.0f, 1.f, 5.0f))  * scale(mat4(1.0f), vec3(6.1f, 1.6f, 6.1f));
+        mat4 bigBaseMatrix = translate(mat4(1.0f), vec3(5.0f, 1.f, 5.0f)) * scale(mat4(1.0f), vec3(6.1f, 1.6f, 6.1f));
         setWorldMatrix(texturedShaderProgram, bigBaseMatrix);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -523,19 +534,14 @@ int main(int argc, char *argv[])
         setWorldMatrix(texturedShaderProgram, hammerMatrix);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        
-
-
-
-        // calcualte new cube position if necessary
-        if(newCube == true){
+        // calculate new cube position if necessary
+        if (newCube == true)
+        {
             // choose new cube position
-            cubeRad = (rand() % 2) + 16;
+            cubeRad = (rand() % (MAX_CUBE_RADIUS - MIN_CUBE_RADIUS + 1)) + MIN_CUBE_RADIUS;
             cubeRot = rand() % 360;
-            cubeY = rand() % 5 + 4;
+            cubeY = rand() % (MAX_CUBE_HEIGHT - MIN_CUBE_HEIGHT + 1) + MIN_CUBE_HEIGHT;
             newCube = false;
-            // reset the timer
-           
         }
         // draw cube
         vec3 cubePosition = vec3(cubeX + (cubeRad * sin(cubeRot)), cubeY, cubeRad * cos(cubeRot));
@@ -543,20 +549,18 @@ int main(int argc, char *argv[])
         setWorldMatrix(texturedShaderProgram, cubeMatrix);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        //calcuate distance from hammer to cube
+        // calculate distance from hammer to cube
         float distanceX = abs(hammerWorldPos.x - cubePosition.x);
         float distanceY = abs(hammerWorldPos.y - cubePosition.y);
         float distanceZ = abs(hammerWorldPos.z - cubePosition.z);
-        if(distanceX < (4.0f * sin(baseRotation) + 1) & distanceY < 4.0f & distanceZ < (4.0f * cos(baseRotation) + 1)){
+        if (distanceX < (4.0f * sin(baseRotation) + 1) && distanceY < 4.0f && distanceZ < (4.0f * cos(baseRotation) + 1))
+        {
             cout << "you got it!" << endl;
             newCube = true;
             baseTime = millis;
             points = points + 1;
             cout << "you now have " << points << " points!" << endl;
         }
-
-
-
 
         // End Frame
         glfwSwapBuffers(window);
@@ -581,21 +585,19 @@ int main(int argc, char *argv[])
         bool fastCam = glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS || glfwGetKey(window, GLFW_KEY_RIGHT_SHIFT) == GLFW_PRESS;
         float currentCameraSpeed = (fastCam) ? cameraFastSpeed : cameraSpeed;
 
-
         // Update camera horizontal and vertical angle using the mouse position
         double mousePosX, mousePosY;
         glfwGetCursorPos(window, &mousePosX, &mousePosY);
 
-        double dx = - mousePosX + lastMousePosX;
-        double dy = - mousePosY + lastMousePosY;
+        double dx = -mousePosX + lastMousePosX;
+        double dy = -mousePosY + lastMousePosY;
 
         lastMousePosX = mousePosX;
         lastMousePosY = mousePosY;
 
         // convert to spherical coordinates
-        const float cameraAngularSpeed = 6.0f;
-        cameraHorizontalAngle -= dx * cameraAngularSpeed * dt;
-        cameraVerticalAngle -= dy * cameraAngularSpeed * dt;
+        cameraHorizontalAngle -= dx * CAMERA_ANGULAR_SPEED * dt;
+        cameraVerticalAngle -= dy * CAMERA_ANGULAR_SPEED * dt;
 
         // Clamp vertical angle to -85,85
         cameraVerticalAngle = std::max(-85.0f, std::min(85.0f, cameraVerticalAngle));
@@ -615,7 +617,6 @@ int main(int argc, char *argv[])
         vec3 cameraSideVector = glm::cross(cameraLookAt, vec3(0.0f, 1.0f, 0.0f));
 
         glm::normalize(cameraSideVector);
-
 
         // Use camera lookat and side vectors to update positions with ASDW
         if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) // move camera to the left
@@ -640,50 +641,45 @@ int main(int argc, char *argv[])
 
         if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) // move robot bicep to the left
         {
-
             if (bicepAngle > -45.0)
-                bicepAngle = bicepAngle - 0.7;
+                bicepAngle = bicepAngle - ARM_ROTATION_SPEED;
         }
 
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) // move robot bicep to the right
         {
             if (bicepAngle < 45.0)
-                bicepAngle = bicepAngle + 0.7;
+                bicepAngle = bicepAngle + ARM_ROTATION_SPEED;
         }
 
-        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) // move firearm up/to the left
+        if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) // move forearm up/to the left
         {
             if (forearmAngle > -140)
-                forearmAngle += -1.0f;
+                forearmAngle += -FOREARM_ROTATION_SPEED;
         }
 
         if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) // move forearm down/to the right
         {
             if (forearmAngle < 140)
-                forearmAngle += 1.0f;
+                forearmAngle += FOREARM_ROTATION_SPEED;
         }
         if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // rotate base left
         {
-            baseRotation -= 1.0f;
+            baseRotation -= BASE_ROTATION_SPEED;
             if (baseRotation < -360.0f)
                 baseRotation += 360.0f;
         }
 
         if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // rotate base right
         {
-            baseRotation += 1.0f;
+            baseRotation += BASE_ROTATION_SPEED;
             if (baseRotation > 360.0f)
                 baseRotation -= 360.0f;
         }
 
-
-
         // Set the view matrix for first person
         mat4 viewMatrix = mat4(1.0f);
-        viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp );
-        
+        viewMatrix = lookAt(cameraPosition, cameraPosition + cameraLookAt, cameraUp);
 
-        
         setViewMatrix(colorShaderProgram, viewMatrix);
         setViewMatrix(texturedShaderProgram, viewMatrix);
 
@@ -703,42 +699,42 @@ int main(int argc, char *argv[])
     return 0;
 }
 
-
-
-GLuint loadTexture(const char *filename){
-    //load textures with dimension data
+GLuint loadTexture(const char *filename)
+{
+    // load textures with dimension data
     int width, height, nbChannels;
-    unsigned char *data = stbi_load(filename, &width, &height, &nbChannels, 0); 
-    if(!data){
+    unsigned char *data = stbi_load(filename, &width, &height, &nbChannels, 0);
+    if (!data)
+    {
         std::cerr << "Error loading texture file:" << filename << std::endl;
         return 0;
     }
 
-    //create and bind textures
+    // create and bind textures
     GLuint textureId = 0;
     glGenTextures(1, &textureId);
     assert(textureId != 0);
 
     glBindTexture(GL_TEXTURE_2D, textureId);
 
-    //set filter parameters
+    // set filter parameters
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    //upload texture to PU
+    // upload texture to GPU
     GLenum format = 0;
-    if(nbChannels == 1)
+    if (nbChannels == 1)
         format = GL_RED;
-    else if(nbChannels == 3)
+    else if (nbChannels == 3)
         format = GL_RGB;
-    else if(nbChannels == 4)
+    else if (nbChannels == 4)
         format = GL_RGBA;
     glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    //free resource
+    // free resource
     stbi_image_free(data);
     glBindTexture(GL_TEXTURE_2D, 0);
 
