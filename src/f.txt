@@ -1,2 +1,0 @@
-find main.cpp Makefile \
-  | entr -rc sh -c 'make main && ./main'

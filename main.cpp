@@ -349,8 +349,8 @@ int main(int argc, char *argv[])
     GLuint brickTextureID = loadTexture("Textures/brick.jpg");
     GLuint grassTextureID = loadTexture("Textures/image.png");
     GLuint woodTextureID = loadTexture("Textures/wood.png");
-    GLuint cementTextureID = loadTexture("Textures/cement.png");
-    GLuint cement0TextureID = loadTexture("Textures/cement0.png");
+    GLuint cementTopTextureID = loadTexture("Textures/cementTop.png");
+    GLuint cementBaseTextureID = loadTexture("Textures/cementBase.png");
     GLuint metalTextureID = loadTexture("Textures/metal.png");
 
     // Black background
@@ -364,15 +364,15 @@ int main(int argc, char *argv[])
     glUseProgram(colorShaderProgram);
 
     // Camera parameters for view transform
-    vec3 cameraPosition(-25.0f, 20.0f, -5.0f);
-    vec3 cameraLookAt(-1.0f, 0.0f, 5.0f);
+    vec3 cameraPosition(-35.0f, 20.0f, -35.0f);
+    vec3 cameraLookAt(1.0f, -0.3f, 1.0f);
     vec3 cameraUp(0.0f, 1.0f, 0.0f);
 
     // Other camera parameters
     float cameraSpeed = CAMERA_SPEED;
     float cameraFastSpeed = CAMERA_FAST_SPEED_MULTIPLIER * cameraSpeed;
-    float cameraHorizontalAngle = 90.0f;
-    float cameraVerticalAngle = 0.0f;
+    float cameraHorizontalAngle = 45.0f;
+    float cameraVerticalAngle = -10.0f;
     bool cameraFirstPerson = true; // press 1 or 2 to toggle this variable
 
     // Spinning cube at camera position
@@ -485,13 +485,13 @@ int main(int argc, char *argv[])
         glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
 
         // draw bicep base
-        glBindTexture(GL_TEXTURE_2D, cementTextureID);
+        glBindTexture(GL_TEXTURE_2D, cementTopTextureID);
         mat4 baseMatrix = translate(mat4(1.0f), vec3(5.0f, 1.f, 5.0f)) * rotate(mat4(1.0f), radians(baseRotation + 180.0f), vec3(0.0f, 1.0f, 0.0f)) * scale(mat4(1.0f), vec3(4.1f, 2.4f, 4.1f));
         setWorldMatrix(texturedShaderProgram, baseMatrix);
         glDrawArrays(GL_TRIANGLES, 0, 36);
 
         // draw larger fixed base
-        glBindTexture(GL_TEXTURE_2D, cement0TextureID);
+        glBindTexture(GL_TEXTURE_2D, cementBaseTextureID);
         mat4 bigBaseMatrix = translate(mat4(1.0f), vec3(5.0f, 1.f, 5.0f)) * scale(mat4(1.0f), vec3(6.1f, 1.6f, 6.1f));
         setWorldMatrix(texturedShaderProgram, bigBaseMatrix);
         glDrawArrays(GL_TRIANGLES, 0, 36);
@@ -639,15 +639,17 @@ int main(int argc, char *argv[])
             cameraPosition += cameraLookAt * currentCameraSpeed * dt;
         }
 
+        // Arm Controls
+
         if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) // move robot bicep to the left
         {
-            if (bicepAngle > -45.0)
+            if (bicepAngle > -30.0)
                 bicepAngle = bicepAngle - ARM_ROTATION_SPEED;
         }
 
         if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) // move robot bicep to the right
         {
-            if (bicepAngle < 45.0)
+            if (bicepAngle < 30.0)
                 bicepAngle = bicepAngle + ARM_ROTATION_SPEED;
         }
 
@@ -662,14 +664,14 @@ int main(int argc, char *argv[])
             if (forearmAngle < 140)
                 forearmAngle += FOREARM_ROTATION_SPEED;
         }
-        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // rotate base left
+        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // rotate base left
         {
             baseRotation -= BASE_ROTATION_SPEED;
             if (baseRotation < -360.0f)
                 baseRotation += 360.0f;
         }
 
-        if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // rotate base right
+        if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // rotate base right
         {
             baseRotation += BASE_ROTATION_SPEED;
             if (baseRotation > 360.0f)
