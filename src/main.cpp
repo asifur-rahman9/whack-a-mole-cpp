@@ -23,6 +23,7 @@
 #include "game.hpp"
 #include "arm.hpp"
 #include "camera.hpp"
+#include "shaders.hpp"
 
 // Using statements
 using namespace glm;
@@ -73,8 +74,17 @@ int main(int argc, char *argv[])
     glClearColor(0.53f, 0.81f, 0.92f, 1.0f);
 
     // Compile and link shaders here ...
-    int colorShaderProgram = compileAndLinkShaders(getVertexShaderSource(), getFragmentShaderSource());
-    int texturedShaderProgram = compileAndLinkShaders(getTexturedVertexShaderSource(), getTexturedFragmentShaderSource());
+    Shader colorShader("./shaders/vertexShader.glsl","./shaders/fragmentShader.glsl");
+    Shader textureShader("./shaders/textureVertex.glsl","./shaders/textureFragment.glsl");
+
+    int colorShaderProgram = colorShader.ID;
+    int texturedShaderProgram = textureShader.ID;
+
+
+
+    //
+    //int colorShaderProgram = compileAndLinkShaders(getVertexShaderSource(), getFragmentShaderSource());
+    //int texturedShaderProgram = compileAndLinkShaders(getTexturedVertexShaderSource(), getTexturedFragmentShaderSource());
 
     // We can set the shader once, since we have only one
     glUseProgram(colorShaderProgram);
@@ -157,6 +167,13 @@ int main(int argc, char *argv[])
 
         // Update game logic (cube timing and positioning)
         updateGameLogic(newCube, cubeRad, cubeRot, cubeY, millis, baseTime, reset);
+
+        //update lighting parameters
+        glUseProgram(texturedShaderProgram);
+        //textureShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+        textureShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
+        textureShader.setVec3("lightPos", vec3(40.f, 50.f, 40.f));
+        textureShader.setVec3("viewPos", camera.getPosition());
 
         // Render the entire scene
         renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,

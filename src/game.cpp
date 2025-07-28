@@ -43,7 +43,7 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
                  float forearmLength, float cubeX, float cubeY, float cubeRad, float cubeRot)
 {
     // Enable our texture shader program, set the texture location, bind the texture
-    glUseProgram(texturedShaderProgram);
+    
     glActiveTexture(GL_TEXTURE0);
     GLuint textureLocation = glGetUniformLocation(texturedShaderProgram, "textureSampler");
     glBindTexture(GL_TEXTURE_2D, grassTextureID);

@@ -21,5 +21,5 @@ const float BASE_ROTATION_SPEED = 1.0f;
 const unsigned long CUBE_RESET_TIME_MS = 10000; // 10 seconds
 const int MIN_CUBE_RADIUS = 16;
 const int MAX_CUBE_RADIUS = 18;
-const int MIN_CUBE_HEIGHT = 4;
-const int MAX_CUBE_HEIGHT = 9;
+const int MIN_CUBE_HEIGHT = 7;
+const int MAX_CUBE_HEIGHT = 11;

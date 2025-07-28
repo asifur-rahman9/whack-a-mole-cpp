@@ -3,8 +3,75 @@
 #include <cassert>
 #include <stb/stb_image.h>
 
+// Example normals for each face (you may want to adjust these for your cube)
+const vec3 normals[] = {
+    vec3(-1.0f, 0.0f, 0.0f), // left
+    vec3(0.0f, 0.0f, -1.0f), // far
+    vec3(0.0f, -1.0f, 0.0f), // bottom
+    vec3(0.0f, 0.0f, 1.0f),  // near
+    vec3(1.0f, 0.0f, 0.0f),  // right
+    vec3(0.0f, 1.0f, 0.0f)   // top
+};
+
+// Textured Cube model with position, color, UV, and normal
+const TexturedColoredNormalVertex texturedCubeVertexArray[] = {
+    // left - red
+    TexturedColoredNormalVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 0.0f), normals[0]),
+    TexturedColoredNormalVertex(vec3(-0.5f, -0.5f, 0.5f),  vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 1.0f), normals[0]),
+    TexturedColoredNormalVertex(vec3(-0.5f, 0.5f, 0.5f),   vec3(1.0f, 0.0f, 0.0f), vec2(1.0f, 1.0f), normals[0]),
+
+    TexturedColoredNormalVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 0.0f), normals[0]),
+    TexturedColoredNormalVertex(vec3(-0.5f, 0.5f, 0.5f),   vec3(1.0f, 0.0f, 0.0f), vec2(1.0f, 1.0f), normals[0]),
+    TexturedColoredNormalVertex(vec3(-0.5f, 0.5f, -0.5f),  vec3(1.0f, 0.0f, 0.0f), vec2(1.0f, 0.0f), normals[0]),
+
+    // far - blue
+    TexturedColoredNormalVertex(vec3(0.5f, 0.5f, -0.5f),   vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f), normals[1]),
+    TexturedColoredNormalVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f), normals[1]),
+    TexturedColoredNormalVertex(vec3(-0.5f, 0.5f, -0.5f),  vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f), normals[1]),
+
+    TexturedColoredNormalVertex(vec3(0.5f, 0.5f, -0.5f),   vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f), normals[1]),
+    TexturedColoredNormalVertex(vec3(0.5f, -0.5f, -0.5f),  vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 0.0f), normals[1]),
+    TexturedColoredNormalVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f), normals[1]),
+
+    // bottom - turquoise
+    TexturedColoredNormalVertex(vec3(0.5f, -0.5f, 0.5f),   vec3(0.0f, 1.0f, 1.0f), vec2(1.0f, 1.0f), normals[2]),
+    TexturedColoredNormalVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f), normals[2]),
+    TexturedColoredNormalVertex(vec3(0.5f, -0.5f, -0.5f),  vec3(0.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f), normals[2]),
+
+    TexturedColoredNormalVertex(vec3(0.5f, -0.5f, 0.5f),   vec3(0.0f, 1.0f, 1.0f), vec2(1.0f, 1.0f), normals[2]),
+    TexturedColoredNormalVertex(vec3(-0.5f, -0.5f, 0.5f),  vec3(0.0f, 1.0f, 1.0f), vec2(0.0f, 1.0f), normals[2]),
+    TexturedColoredNormalVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f), normals[2]),
+        // near - green
+    TexturedColoredNormalVertex(vec3(-0.5f, 0.5f, 0.5f),   vec3(0.0f, 1.0f, 0.0f), vec2(0.0f, 1.0f), normals[3]),
+    TexturedColoredNormalVertex(vec3(-0.5f, -0.5f, 0.5f),  vec3(0.0f, 1.0f, 0.0f), vec2(0.0f, 0.0f), normals[3]),
+    TexturedColoredNormalVertex(vec3(0.5f, -0.5f, 0.5f),   vec3(0.0f, 1.0f, 0.0f), vec2(1.0f, 0.0f), normals[3]),
+
+    TexturedColoredNormalVertex(vec3(0.5f, 0.5f, 0.5f),    vec3(0.0f, 1.0f, 0.0f), vec2(1.0f, 1.0f), normals[3]),
+    TexturedColoredNormalVertex(vec3(-0.5f, 0.5f, 0.5f),   vec3(0.0f, 1.0f, 0.0f), vec2(0.0f, 1.0f), normals[3]),
+    TexturedColoredNormalVertex(vec3(0.5f, -0.5f, 0.5f),   vec3(0.0f, 1.0f, 0.0f), vec2(1.0f, 0.0f), normals[3]),
+
+    // right - purple
+    TexturedColoredNormalVertex(vec3(0.5f, 0.5f, 0.5f),    vec3(1.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f), normals[4]),
+    TexturedColoredNormalVertex(vec3(0.5f, -0.5f, -0.5f),  vec3(1.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f), normals[4]),
+    TexturedColoredNormalVertex(vec3(0.5f, 0.5f, -0.5f),   vec3(1.0f, 0.0f, 1.0f), vec2(1.0f, 0.0f), normals[4]),
+
+    TexturedColoredNormalVertex(vec3(0.5f, -0.5f, -0.5f),  vec3(1.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f), normals[4]),
+    TexturedColoredNormalVertex(vec3(0.5f, 0.5f, 0.5f),    vec3(1.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f), normals[4]),
+    TexturedColoredNormalVertex(vec3(0.5f, -0.5f, 0.5f),   vec3(1.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f), normals[4]),
+
+    // top - yellow
+    TexturedColoredNormalVertex(vec3(0.5f, 0.5f, 0.5f),    vec3(1.0f, 1.0f, 0.0f), vec2(1.0f, 1.0f), normals[5]),
+    TexturedColoredNormalVertex(vec3(0.5f, 0.5f, -0.5f),   vec3(1.0f, 1.0f, 0.0f), vec2(1.0f, 0.0f), normals[5]),
+    TexturedColoredNormalVertex(vec3(-0.5f, 0.5f, -0.5f),  vec3(1.0f, 1.0f, 0.0f), vec2(0.0f, 0.0f), normals[5]),
+
+    TexturedColoredNormalVertex(vec3(0.5f, 0.5f, 0.5f),    vec3(1.0f, 1.0f, 0.0f), vec2(1.0f, 1.0f), normals[5]),
+    TexturedColoredNormalVertex(vec3(-0.5f, 0.5f, -0.5f),  vec3(1.0f, 1.0f, 0.0f), vec2(0.0f, 0.0f), normals[5]),
+    TexturedColoredNormalVertex(vec3(-0.5f, 0.5f, 0.5f),   vec3(1.0f, 1.0f, 0.0f), vec2(0.0f, 1.0f), normals[5])
+};
+
+
 // Textured Cube model with position, color, and UV coordinates
-const TexturedColoredVertex texturedCubeVertexArray[] = {                                       // position,                            color
+const TexturedColoredVertex oldTexturedCubeVertexArray[] = {                                       // position,                            color
     TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 0.0f)), // left - red
     TexturedColoredVertex(vec3(-0.5f, -0.5f, 0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 1.0f)),
     TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(1.0f, 1.0f)),
@@ -109,32 +176,17 @@ int createTexturedCubeVertexArrayObject()
     glBindBuffer(GL_ARRAY_BUFFER, vertexBufferObject);
     glBufferData(GL_ARRAY_BUFFER, sizeof(texturedCubeVertexArray), texturedCubeVertexArray, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0,                             // attribute 0 matches aPos in Vertex Shader
-                          3,                             // size
-                          GL_FLOAT,                      // type
-                          GL_FALSE,                      // normalized?
-                          sizeof(TexturedColoredVertex), // stride - each vertex contain 2 vec3 (position, color)
-                          (void *)0                      // array buffer offset
-    );
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)0);                // position
     glEnableVertexAttribArray(0);
 
-    glVertexAttribPointer(1, // attribute 1 matches aColor in Vertex Shader
-                          3,
-                          GL_FLOAT,
-                          GL_FALSE,
-                          sizeof(TexturedColoredVertex),
-                          (void *)sizeof(vec3) // color is offseted a vec3 (comes after position)
-    );
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(3 * sizeof(float))); // color
     glEnableVertexAttribArray(1);
 
-    glVertexAttribPointer(2, // attribute 2 matches aUV in Vertex Shader
-                          2,
-                          GL_FLOAT,
-                          GL_FALSE,
-                          sizeof(TexturedColoredVertex),
-                          (void *)(2 * sizeof(vec3)) // uv is offseted by 2 vec3 (comes after position and color)
-    );
+    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(6 * sizeof(float))); // uv
     glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, 11 * sizeof(float), (void*)(8 * sizeof(float))); // normal
+    glEnableVertexAttribArray(3);
 
     return vertexArrayObject;
 }

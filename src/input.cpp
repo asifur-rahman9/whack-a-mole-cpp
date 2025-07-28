@@ -33,14 +33,14 @@ void handleRobotArmInput(GLFWwindow *window, float &bicepAngle, float &forearmAn
             forearmAngle += FOREARM_ROTATION_SPEED;
     }
 
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // rotate base left
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) // rotate base right
     {
         baseRotation -= BASE_ROTATION_SPEED;
         if (baseRotation < -360.0f)
             baseRotation += 360.0f;
     }
 
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // rotate base right
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) // rotate base left
     {
         baseRotation += BASE_ROTATION_SPEED;
         if (baseRotation > 360.0f)

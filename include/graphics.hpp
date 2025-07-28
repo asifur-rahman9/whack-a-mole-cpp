@@ -15,8 +15,18 @@ struct TexturedColoredVertex
     vec2 uv;
 };
 
+// Define a new vertex struct with normal
+struct TexturedColoredNormalVertex {
+    vec3 position;
+    vec3 color;
+    vec2 uv;
+    vec3 normal;
+    TexturedColoredNormalVertex(vec3 p, vec3 c, vec2 u, vec3 n)
+        : position(p), color(c), uv(u), normal(n) {}
+};
+
 // Textured Cube model with position, color, and UV coordinates
-extern const TexturedColoredVertex texturedCubeVertexArray[];
+extern const TexturedColoredNormalVertex texturedCubeVertexArray[];
 
 // Graphics function declarations
 GLuint loadTexture(const char *filename);
