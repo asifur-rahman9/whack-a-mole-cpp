@@ -1,4 +1,5 @@
 Elizabeth O'Meara 40065959
+Asifur Rahman 40194283
 
 
 # cppGraphics
@@ -24,3 +25,4 @@ The scene shows a robotic arm that can be controlled to hit a moving target. Lig
 
 ## Teamwork
 This project was done collaboratively, especially with pair programming where we both looked at the code and wrote modifications / new features together.
+
