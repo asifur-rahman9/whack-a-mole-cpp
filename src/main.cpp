@@ -2,6 +2,7 @@
 // Standard library includes
 #include <iostream>
 #include <chrono>
+#include <string>
 
 // OpenGL includes
 #include <GL/glew.h>
@@ -24,10 +25,13 @@
 #include "arm.hpp"
 #include "camera.hpp"
 #include "shaders.hpp"
+#include "loadObj.hpp"
 
 // Using statements
 using namespace glm;
 using namespace std;
+
+GLuint setupModelVBO(string path, int& vertexCount);
 
 // main function
 int main(int argc, char *argv[])
@@ -71,23 +75,32 @@ int main(int argc, char *argv[])
     GLuint metalTextureID = loadTexture("textures/metal.png");
 
     // Sky blue background for sky
-    glClearColor(0.53f, 0.81f, 0.92f, 1.0f);
+    glClearColor(0.33f, 0.61f, 0.72f, 1.0f);
 
     // Compile and link shaders here ...
     Shader colorShader("./shaders/vertexShader.glsl","./shaders/fragmentShader.glsl");
     Shader textureShader("./shaders/textureVertex.glsl","./shaders/textureFragment.glsl");
+    Shader lightShader("./shaders/lightingVertex.glsl","./shaders/lightingFragment.glsl");
 
     int colorShaderProgram = colorShader.ID;
     int texturedShaderProgram = textureShader.ID;
+    int lightingShaderProgram = lightShader.ID;
 
 
+    // load object models
+    // Setup models
+    string spherePath = "models/sphere.obj";
+    
+
+    int sphereVertices;
+    GLuint sphereVAO = setupModelVBO(spherePath, sphereVertices);
 
     //
     //int colorShaderProgram = compileAndLinkShaders(getVertexShaderSource(), getFragmentShaderSource());
     //int texturedShaderProgram = compileAndLinkShaders(getTexturedVertexShaderSource(), getTexturedFragmentShaderSource());
 
     // We can set the shader once, since we have only one
-    glUseProgram(colorShaderProgram);
+    glUseProgram(texturedShaderProgram);
 
     // Initialize camera with default parameters
     Camera camera;
@@ -107,9 +120,10 @@ int main(int argc, char *argv[])
     glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
 
     // Set View and Projection matrices on both shaders
-    camera.updateViewMatrix(colorShaderProgram, texturedShaderProgram);
+    camera.updateViewMatrix(colorShaderProgram, texturedShaderProgram, lightingShaderProgram);
     setProjectionMatrix(colorShaderProgram, projectionMatrix);
     setProjectionMatrix(texturedShaderProgram, projectionMatrix);
+    setProjectionMatrix(lightingShaderProgram, projectionMatrix);
 
     // Define and upload geometry to the GPU here ...
     int vao = createTexturedCubeVertexArrayObject();
@@ -170,9 +184,29 @@ int main(int argc, char *argv[])
 
         //update lighting parameters
         glUseProgram(texturedShaderProgram);
+        const int LIGHT_NUMBR = 5;
+        vec3 lightPos[LIGHT_NUMBR];
+        lightPos[0] = vec3(40.f, 50.f, 40.f);
+        lightPos[1] = vec3(-40.f, 50.f, -40.f);
+        lightPos[2] = vec3(40.f, 40.f, 20.f);
+        lightPos[3] = vec3(50.f, 35.f, 50.f);
+        lightPos[4] = vec3(15.f, 30.f, -40.f);
+
         //textureShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
-        textureShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
-        textureShader.setVec3("lightPos", vec3(40.f, 50.f, 40.f));
+        textureShader.setVec3("lightColor", 0.7f, 0.7f, 0.7f);
+        for(int i = 0; i < LIGHT_NUMBR; i++){
+            string lightNo = "lightPos[" + to_string(i) + "]";
+            glUseProgram(lightingShaderProgram);
+
+            renderLights(sphereVAO, lightingShaderProgram, sphereVertices, lightPos[i]); 
+
+            glUseProgram(texturedShaderProgram);
+            
+            textureShader.setVec3(lightNo, lightPos[i]);
+        }
+        
+        //glUniform3fv(glGetUniformLocation(texturedShaderProgram, "lightPos"), 10, lightPos);
+
         textureShader.setVec3("viewPos", camera.getPosition());
 
         // Render the entire scene
@@ -180,6 +214,10 @@ int main(int argc, char *argv[])
                     metalTextureID, texturedShaderProgram, vao, baseRotation, bicepAngle,
                     forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot);
 
+        
+        
+                    
+       
         // Check for collision between hammer and cube
         vec3 hammerWorldPos = calculateHammerPosition(baseRotation, bicepAngle, forearmAngle, bicepLength, forearmLength);
         vec3 cubePosition = vec3(cubeX + (cubeRad * sin(cubeRot)), cubeY, cubeRad * cos(cubeRot));
@@ -208,7 +246,7 @@ int main(int argc, char *argv[])
         handleRobotArmInput(window, bicepAngle, forearmAngle, baseRotation);
 
         // Update view matrix using camera
-        camera.updateViewMatrix(colorShaderProgram, texturedShaderProgram);
+        camera.updateViewMatrix(colorShaderProgram, texturedShaderProgram, lightingShaderProgram);
     }
     cout << "Total points: " << points << "!!" << endl;
 
@@ -217,3 +255,55 @@ int main(int argc, char *argv[])
 
     return 0;
 }
+
+GLuint setupModelVBO(string path, int& vertexCount) {
+  std::vector<glm::vec3> vertices;
+  std::vector<glm::vec3> normals;
+  std::vector<glm::vec2> UVs;
+
+  // read the vertex data from the model's OBJ file
+  loadOBJ(path.c_str(), vertices, normals, UVs);
+
+  GLuint VAO;
+  glGenVertexArrays(1, &VAO);
+  glBindVertexArray(VAO);  // Becomes active VAO
+  // Bind the Vertex Array Object first, then bind and set vertex buffer(s) and
+  // attribute pointer(s).
+
+  // Vertex VBO setup
+  GLuint vertices_VBO;
+  glGenBuffers(1, &vertices_VBO);
+  glBindBuffer(GL_ARRAY_BUFFER, vertices_VBO);
+  glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3),
+               &vertices.front(), GL_STATIC_DRAW);
+  glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat),
+                        (GLvoid*)0);
+  glEnableVertexAttribArray(0);
+
+  // Normals VBO setup
+  GLuint normals_VBO;
+  glGenBuffers(1, &normals_VBO);
+  glBindBuffer(GL_ARRAY_BUFFER, normals_VBO);
+  glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3),
+               &normals.front(), GL_STATIC_DRAW);
+  glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(GLfloat),
+                        (GLvoid*)0);
+  glEnableVertexAttribArray(1);
+
+  // UVs VBO setup
+  GLuint uvs_VBO;
+  glGenBuffers(1, &uvs_VBO);
+  glBindBuffer(GL_ARRAY_BUFFER, uvs_VBO);
+  glBufferData(GL_ARRAY_BUFFER, UVs.size() * sizeof(glm::vec2), &UVs.front(),
+               GL_STATIC_DRAW);
+  glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat),
+                        (GLvoid*)0);
+  glEnableVertexAttribArray(2);
+
+  glBindVertexArray(0);
+  // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent
+  // strange bugs, as we are using multiple VAOs)
+  vertexCount = vertices.size();
+  return VAO;
+}
+

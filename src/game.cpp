@@ -53,11 +53,13 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
     glBindVertexArray(vao);
 
     // Draw ground
+    glUniform1f(glGetUniformLocation(texturedShaderProgram, "specularStrength"), 0.2f);
     mat4 groundWorldMatrix = translate(mat4(1.0f), vec3(0.0f, -0.01f, 0.0f)) * scale(mat4(1.0f), vec3(1000.0f, 0.02f, 1000.0f));
     setWorldMatrix(texturedShaderProgram, groundWorldMatrix);
     glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
 
     // Render all arm components using the dedicated arm module
+    glUniform1f(glGetUniformLocation(texturedShaderProgram, "specularStrength"), 0.5f);
     renderArmComponents(cementTopTextureID, cementBaseTextureID, woodTextureID, metalTextureID,
                         texturedShaderProgram, baseRotation, bicepAngle, forearmAngle,
                         bicepLength, forearmLength);
@@ -67,6 +69,26 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
     mat4 cubeMatrix = translate(mat4(1.0f), cubePosition) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 2.0f));
     setWorldMatrix(texturedShaderProgram, cubeMatrix);
     glDrawArrays(GL_TRIANGLES, 0, 36);
+
+
+
+}
+
+void renderLights(int lightVAO, int lightShadingProgram, int sphereVertices, vec3 lightPos){
+    // Bind the appropriate VAO
+    
+    glBindVertexArray(lightVAO);
+
+    // Draw ground
+    mat4 lightWorldMatrix = translate(mat4(1.0f), lightPos) * scale(mat4(1.0f), vec3(1.0f, 1.0f, 1.0f));
+    setWorldMatrix(lightShadingProgram, lightWorldMatrix);
+    glDrawArrays(GL_TRIANGLES, 0, sphereVertices); // 36 vertices, starting at index 0
+
+    lightWorldMatrix = translate(mat4(1.0f), lightPos) * scale(mat4(1.0f), vec3(0.5f, 0.5f, 0.5f));
+    setWorldMatrix(lightShadingProgram, lightWorldMatrix);
+    glDrawArrays(GL_TRIANGLES, 0, sphereVertices); // 36 vertices, starting at index 0
+
+
 }
 
 // Check collision between hammer and cube

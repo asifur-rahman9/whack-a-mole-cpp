@@ -84,11 +84,12 @@ void Camera::handleInput(GLFWwindow *window, float deltaTime)
 }
 
 // Update view matrix for both shader programs
-void Camera::updateViewMatrix(int colorShaderProgram, int texturedShaderProgram)
+void Camera::updateViewMatrix(int colorShaderProgram, int texturedShaderProgram, int lightingShaderProgram)
 {
     mat4 viewMatrix = getViewMatrix();
     setViewMatrix(colorShaderProgram, viewMatrix);
     setViewMatrix(texturedShaderProgram, viewMatrix);
+    setViewMatrix(lightingShaderProgram, viewMatrix);
 }
 
 // Get the current view matrix

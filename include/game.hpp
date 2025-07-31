@@ -14,3 +14,5 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
                  float forearmLength, float cubeX, float cubeY, float cubeRad, float cubeRot);
 
 bool checkCollision(vec3 hammerWorldPos, vec3 cubePosition, float baseRotation);
+
+void renderLights(int lightVAO, int lightShadingProgram, int sphereVertices, vec3 lightPos);
