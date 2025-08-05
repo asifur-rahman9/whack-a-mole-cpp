@@ -81,23 +81,33 @@ int main(int argc, char *argv[])
     Shader colorShader("./shaders/vertexShader.glsl","./shaders/fragmentShader.glsl");
     Shader textureShader("./shaders/textureVertex.glsl","./shaders/textureFragment.glsl");
     Shader lightShader("./shaders/lightingVertex.glsl","./shaders/lightingFragment.glsl");
+    Shader skyboxShader("./shaders/skyboxVertex.glsl","./shaders/skyboxFragment.glsl");
 
     int colorShaderProgram = colorShader.ID;
     int texturedShaderProgram = textureShader.ID;
     int lightingShaderProgram = lightShader.ID;
+    int skyboxShaderProgram = skyboxShader.ID;
 
 
     // load object models
     // Setup models
     string spherePath = "models/sphere.obj";
     
-
+    // load the sphere coordinates
     int sphereVertices;
     GLuint sphereVAO = setupModelVBO(spherePath, sphereVertices);
 
-    //
-    //int colorShaderProgram = compileAndLinkShaders(getVertexShaderSource(), getFragmentShaderSource());
-    //int texturedShaderProgram = compileAndLinkShaders(getTexturedVertexShaderSource(), getTexturedFragmentShaderSource());
+    // load the skybox cube
+    vector<std::string> faces = {
+    "textures/skybox/right.jpg",
+    "textures/skybox/left.jpg",
+    "textures/skybox/top.jpg",
+    "textures/skybox/bottom.jpg",
+    "textures/skybox/front.jpg",
+    "textures/skybox/back.jpg"
+    };
+    unsigned int cubemapTexture = loadCubemap(faces); 
+    
 
     // We can set the shader once, since we have only one
     glUseProgram(texturedShaderProgram);
@@ -127,6 +137,10 @@ int main(int argc, char *argv[])
 
     // Define and upload geometry to the GPU here ...
     int vao = createTexturedCubeVertexArrayObject();
+
+    //create the skybox vertex data
+    unsigned int skyboxVAO, skyboxVBO;
+    generateSkyboxVertices( &skyboxVAO, &skyboxVBO);
 
     // For frame time
     float lastFrameTime = glfwGetTime();
@@ -166,12 +180,33 @@ int main(int argc, char *argv[])
     // Entering Main Loop
     while (!glfwWindowShouldClose(window))
     {
+        
+
+
         // Frame time calculation
         float dt = glfwGetTime() - lastFrameTime;
         lastFrameTime += dt;
 
         // Each frame, reset color of each pixel to glClearColor
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // render the skybox first
+        glm::mat4 skyView = glm::mat4(glm::mat3(camera.getViewMatrix()));
+        glDepthFunc(GL_LEQUAL);
+        glDepthMask(GL_FALSE);
+
+        glUseProgram(skyboxShaderProgram);
+        skyboxShader.setMat4("view", skyView);
+        skyboxShader.setMat4("projection", projectionMatrix);
+        skyboxShader.setInt("skybox", 0);
+
+        glBindVertexArray(skyboxVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
 
         // keeping track of time for adjustment with time purposes
         now = std::chrono::system_clock::now();
@@ -185,14 +220,24 @@ int main(int argc, char *argv[])
         //update lighting parameters
         glUseProgram(texturedShaderProgram);
         const int LIGHT_NUMBR = 5;
-        vec3 lightPos[LIGHT_NUMBR];
-        lightPos[0] = vec3(40.f, 50.f, 40.f);
-        lightPos[1] = vec3(-40.f, 50.f, -40.f);
-        lightPos[2] = vec3(40.f, 40.f, 20.f);
-        lightPos[3] = vec3(50.f, 35.f, 50.f);
-        lightPos[4] = vec3(15.f, 30.f, -40.f);
+        float lightRad[LIGHT_NUMBR];
+        float val =  (float)((millis / 10) % 3600);
+        lightRad[0] = radians(val);
+        lightRad[1] = radians(2.0 * val + 45);
+        lightRad[2] = radians(1.2 * val + 90);
+        lightRad[3] = radians(0.8 * val);
+        lightRad[4] = radians(1.3 * val);
+        //cout << val << endl;
 
-        //textureShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+
+        vec3 lightPos[LIGHT_NUMBR];
+        lightPos[0] = vec3(40.f * sin(lightRad[0]), 50.f, 40.f* cos(lightRad[0]));
+        lightPos[1] = vec3(45.f* sin(lightRad[1]), 60.f, 45.f* cos(lightRad[1]));
+        lightPos[2] = vec3(40.f* sin(lightRad[2]), 40.f, 20.f* cos(lightRad[2]));
+        lightPos[3] = vec3(50.f* sin(lightRad[3]), 35.f, 50.f* cos(lightRad[3]));
+        lightPos[4] = vec3(25.f* sin(lightRad[4]), 30.f, 40.f* cos(lightRad[4]));
+
+        
         textureShader.setVec3("lightColor", 0.7f, 0.7f, 0.7f);
         for(int i = 0; i < LIGHT_NUMBR; i++){
             string lightNo = "lightPos[" + to_string(i) + "]";
@@ -230,6 +275,8 @@ int main(int argc, char *argv[])
             points = points + 1;
             cout << "Current score: " << points << " points!" << endl;
         }
+
+        
 
         // End Frame
         glfwSwapBuffers(window);

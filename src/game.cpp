@@ -79,14 +79,12 @@ void renderLights(int lightVAO, int lightShadingProgram, int sphereVertices, vec
     
     glBindVertexArray(lightVAO);
 
-    // Draw ground
-    mat4 lightWorldMatrix = translate(mat4(1.0f), lightPos) * scale(mat4(1.0f), vec3(1.0f, 1.0f, 1.0f));
+    // Draw each of the spheres
+    mat4 lightWorldMatrix = translate(mat4(1.0f), lightPos) * scale(mat4(1.0f), vec3(0.5f, 0.5f, 0.5f));
     setWorldMatrix(lightShadingProgram, lightWorldMatrix);
-    glDrawArrays(GL_TRIANGLES, 0, sphereVertices); // 36 vertices, starting at index 0
+    glDrawArrays(GL_TRIANGLES, 0, sphereVertices); // counting the sphere vertices
 
-    lightWorldMatrix = translate(mat4(1.0f), lightPos) * scale(mat4(1.0f), vec3(0.5f, 0.5f, 0.5f));
-    setWorldMatrix(lightShadingProgram, lightWorldMatrix);
-    glDrawArrays(GL_TRIANGLES, 0, sphereVertices); // 36 vertices, starting at index 0
+    
 
 
 }

@@ -1,8 +1,11 @@
 #pragma once
 #include <GL/glew.h>
 #include <glm/glm.hpp>
+#include <string>
+#include <vector>
 
 using namespace glm;
+using namespace std;
 
 // Vertex structure for textured colored vertices
 struct TexturedColoredVertex
@@ -40,3 +43,8 @@ int createTexturedCubeVertexArrayObject();
 void setProjectionMatrix(int shaderProgram, mat4 projectionMatrix);
 void setViewMatrix(int shaderProgram, mat4 viewMatrix);
 void setWorldMatrix(int shaderProgram, mat4 worldMatrix);
+
+// functions for the cubeMap
+unsigned int loadCubemap(vector<string> faces);
+
+void generateSkyboxVertices( unsigned int* skyboxVAO, unsigned int* skyboxVBO);
