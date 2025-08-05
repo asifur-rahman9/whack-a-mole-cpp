@@ -75,7 +75,7 @@ int main(int argc, char *argv[])
     GLuint metalTextureID = loadTexture("textures/metal.png");
 
     // Sky blue background for sky
-    glClearColor(0.33f, 0.61f, 0.72f, 1.0f);
+    glClearColor(0.23f, 0.21f, 0.62f, 1.0f);
 
     // Compile and link shaders here ...
     Shader colorShader("./shaders/vertexShader.glsl","./shaders/fragmentShader.glsl");
