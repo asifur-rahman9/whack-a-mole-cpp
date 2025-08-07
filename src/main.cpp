@@ -158,8 +158,10 @@ int main(int argc, char *argv[])
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor); 
     // attach depth texture as FBO's depth buffer
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
@@ -236,14 +238,16 @@ int main(int argc, char *argv[])
         textureShader.setVec3("viewPos", camera.getPosition());
 
         //render the Shadow map !!
+        glCullFace(GL_FRONT);
         
         glm::mat4 lightProjection, lightView;
         glm::mat4 lightSpaceMatrix;
         float near_plane = 1.0f, far_plane = 300.0f;
-        float fov = glm::radians(110.0f); // or another suitable value
-        float aspect = 1.0f; // shadow map is usually square
-        lightProjection = glm::perspective(fov, aspect, near_plane, far_plane);
-        lightView = glm::lookAt(lightPos[1], glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(0.0, 1.0, 0.0));
+        //float fov = glm::radians(160.0f); // or another suitable value
+        //float aspect = 1.0f; // shadow map is usually square
+        //lightProjection = glm::perspective(fov, aspect, near_plane, far_plane);
+        lightProjection = glm::ortho(-100.f, 100.f, -100.f, 100.f, near_plane, far_plane);
+        lightView = glm::lookAt(lightPos[0], glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(0.0, 1.0, 0.0));
         lightSpaceMatrix = lightProjection * lightView;
 
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
@@ -259,7 +263,12 @@ int main(int argc, char *argv[])
                     forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot);
 
         
-        // Render the entire scene
+
+
+
+
+        // Render the entire scene with regular shaders
+        glCullFace(GL_BACK);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
         //

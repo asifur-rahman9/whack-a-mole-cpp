@@ -17,7 +17,7 @@ uniform mat4 lightSpaceMatrix;
 
 out vec4 FragColor;
 
-float ShadowCalculation(vec4 fragPosLightSpace);
+float ShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, vec3 norm);
 
 
 void main()
@@ -28,9 +28,11 @@ void main()
     // diffuse 
     vec3 diffuse = vec3(0.0f);
     vec3 specular = vec3(0.0f);
+    vec3 shadDir = normalize(lightPos[0] - FragPos);
+    vec3 norm = normalize(Normal);
 
     for(int i = 0; i < lightNo; i++){
-        vec3 norm = normalize(Normal);
+        
         vec3 lightDir = normalize(lightPos[i] - FragPos);
         float diff = max(dot(norm, lightDir), 0.0);
         float distanceX = (FragPos[0] - lightPos[i][0]);
@@ -52,7 +54,7 @@ void main()
     specular = specular / 10.f;
 
     vec4 fragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
-    float shadow = ShadowCalculation(fragPosLightSpace);
+    float shadow = ShadowCalculation(fragPosLightSpace, shadDir, norm);
     
     
 
@@ -63,7 +65,7 @@ void main()
     FragColor = result * textureColor;
 }
 
-float ShadowCalculation(vec4 fragPosLightSpace)
+float ShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, vec3 norm)
 {
     // Perform perspective divide
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
@@ -74,6 +76,11 @@ float ShadowCalculation(vec4 fragPosLightSpace)
     // Current fragment depth from light's perspective
     float currentDepth = projCoords.z;
     // Shadow if current depth > closest depth
-    float shadow = currentDepth - 0.005 > closestDepth ? 1.0 : 0.0;
+    //float bias = max(0.05 * (1.0 - dot(norm, lightDir)), 0.005); 
+    float shadow = currentDepth - 0.001 > closestDepth ? 1.0 : 0.0;
+
+    if(projCoords.z > 1.0)
+        shadow = 0.0;
+
     return shadow;
 }

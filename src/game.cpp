@@ -136,11 +136,11 @@ vec3* setLights(int LIGHT_NUMBR, int texturedShaderProgram, Shader textureShader
 
         // set the position of each light
         vec3* lightPos = new vec3[LIGHT_NUMBR];
-        lightPos[0] = vec3(40.f * sin(lightRad[0]), 38.f, 40.f* cos(lightRad[0]));
-        lightPos[1] = vec3(45.f* sin(lightRad[1]), 60.f, 45.f* cos(lightRad[1]));
-        lightPos[2] = vec3(40.f* sin(lightRad[2]), 40.f, 20.f* cos(lightRad[2]));
-        lightPos[3] = vec3(50.f* sin(lightRad[3]), 35.f, 50.f* cos(lightRad[3]));
-        lightPos[4] = vec3(25.f* sin(lightRad[4]), 30.f, 40.f* cos(lightRad[4]));
+        lightPos[0] = vec3(40.f * sin(lightRad[0]), 58.f, 40.f* cos(lightRad[0]));
+        lightPos[1] = vec3(45.f* sin(lightRad[1]), 70.f, 45.f* cos(lightRad[1]));
+        lightPos[2] = vec3(40.f* sin(lightRad[2]), 50.f, 20.f* cos(lightRad[2]));
+        lightPos[3] = vec3(50.f* sin(lightRad[3]), 75.f, 50.f* cos(lightRad[3]));
+        lightPos[4] = vec3(25.f* sin(lightRad[4]), 55.f, 40.f* cos(lightRad[4]));
 
         //render each light and set its position in the texture shader
         textureShader.setVec3("lightColor", 0.7f, 0.7f, 0.7f);
