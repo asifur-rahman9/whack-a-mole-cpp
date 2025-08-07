@@ -21,5 +21,4 @@ void main()
     gl_Position = modelViewProjection * vec4(aPos.x, aPos.y, aPos.z, 1.0);
     vertexUV = aUV;
     FragPos = vec3(worldMatrix * vec4(aPos, 1.0));
-    
 }

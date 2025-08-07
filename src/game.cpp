@@ -120,10 +120,10 @@ void renderLights(int lightVAO, int lightShadingProgram, int sphereVertices, vec
 
 }
 
-void setAndRenderLights(int texturedShaderProgram, Shader textureShader, unsigned long millis, int lightingShaderProgram, GLuint sphereVAO, int sphereVertices){
+vec3* setLights(int LIGHT_NUMBR, int texturedShaderProgram, Shader textureShader, unsigned long millis, int lightingShaderProgram){
             //update lighting parameters
         glUseProgram(texturedShaderProgram);
-        const int LIGHT_NUMBR = 5;
+        //const int LIGHT_NUMBR = 5;
         textureShader.setInt("lightNo", LIGHT_NUMBR);
         float lightRad[LIGHT_NUMBR];
         float val =  (float)((millis / 10) % 3600);
@@ -135,7 +135,7 @@ void setAndRenderLights(int texturedShaderProgram, Shader textureShader, unsigne
        
 
         // set the position of each light
-        vec3 lightPos[LIGHT_NUMBR];
+        vec3* lightPos = new vec3[LIGHT_NUMBR];
         lightPos[0] = vec3(40.f * sin(lightRad[0]), 38.f, 40.f* cos(lightRad[0]));
         lightPos[1] = vec3(45.f* sin(lightRad[1]), 60.f, 45.f* cos(lightRad[1]));
         lightPos[2] = vec3(40.f* sin(lightRad[2]), 40.f, 20.f* cos(lightRad[2]));
@@ -145,7 +145,14 @@ void setAndRenderLights(int texturedShaderProgram, Shader textureShader, unsigne
         //render each light and set its position in the texture shader
         textureShader.setVec3("lightColor", 0.7f, 0.7f, 0.7f);
         
-        for(int i = 0; i < LIGHT_NUMBR; i++){
+        
+
+        return lightPos;
+}
+
+void drawLights(int LIGHT_NUMBR, int lightingShaderProgram, GLuint sphereVAO, int sphereVertices, vec3* lightPos, int texturedShaderProgram, Shader textureShader){
+
+    for(int i = 0; i < LIGHT_NUMBR; i++){
             glUseProgram(lightingShaderProgram);
             renderLights(sphereVAO, lightingShaderProgram, sphereVertices, lightPos[i]); 
 
@@ -153,6 +160,7 @@ void setAndRenderLights(int texturedShaderProgram, Shader textureShader, unsigne
             glUseProgram(texturedShaderProgram);
             textureShader.setVec3(lightNo, lightPos[i]);
         }
+
 }
 
 void renderSkybox(Camera camera, int skyboxShaderProgram, Shader skyboxShader, glm::mat4 projectionMatrix, unsigned int skyboxVAO, unsigned int cubemapTexture){

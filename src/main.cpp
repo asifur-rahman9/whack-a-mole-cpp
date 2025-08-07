@@ -86,11 +86,13 @@ int main(int argc, char *argv[])
     Shader textureShader("./shaders/textureVertex.glsl","./shaders/textureFragment.glsl");
     Shader lightShader("./shaders/lightingVertex.glsl","./shaders/lightingFragment.glsl");
     Shader skyboxShader("./shaders/skyboxVertex.glsl","./shaders/skyboxFragment.glsl");
+    Shader shadowShader("./shaders/shadowVertex.glsl","./shaders/shadowFragment.glsl");
 
     //int colorShaderProgram = colorShader.ID;
     int texturedShaderProgram = textureShader.ID;
     int lightingShaderProgram = lightShader.ID;
     int skyboxShaderProgram = skyboxShader.ID;
+    int shadowShaderProgram = shadowShader.ID;
 
 
     // load object models
@@ -143,6 +145,28 @@ int main(int argc, char *argv[])
     unsigned int skyboxVAO, skyboxVBO;
     generateSkyboxVertices( &skyboxVAO, &skyboxVBO);
 
+    // create the depth map
+    // configure depth map FBO
+    // -----------------------
+    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+    unsigned int depthMapFBO;
+    glGenFramebuffers(1, &depthMapFBO);
+    // create depth texture
+    unsigned int depthMap;
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    // attach depth texture as FBO's depth buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
     // For frame time
     float lastFrameTime = glfwGetTime();
 
@@ -192,7 +216,7 @@ int main(int argc, char *argv[])
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // render the skybox first
-        renderSkybox(camera, skyboxShaderProgram, skyboxShader, projectionMatrix, skyboxVAO, cubemapTexture);
+        //renderSkybox(camera, skyboxShaderProgram, skyboxShader, projectionMatrix, skyboxVAO, cubemapTexture);
         
 
         // keeping track of time for adjustment with time purposes
@@ -205,14 +229,80 @@ int main(int argc, char *argv[])
         updateGameLogic(newCube, cubeRad, cubeRot, cubeY, millis, baseTime, reset);
 
         //update lighting parameters
-        setAndRenderLights(texturedShaderProgram, textureShader, millis, lightingShaderProgram, sphereVAO, sphereVertices);
+        const int LIGHT_NUMBR = 5;
+        vec3* lightPos = setLights(LIGHT_NUMBR, texturedShaderProgram, textureShader, millis, lightingShaderProgram);
 
         // set cameraPosition
         textureShader.setVec3("viewPos", camera.getPosition());
 
         //render the Shadow map !!
         
+        glm::mat4 lightProjection, lightView;
+        glm::mat4 lightSpaceMatrix;
+        float near_plane = 1.0f, far_plane = 300.0f;
+        float fov = glm::radians(110.0f); // or another suitable value
+        float aspect = 1.0f; // shadow map is usually square
+        lightProjection = glm::perspective(fov, aspect, near_plane, far_plane);
+        lightView = glm::lookAt(lightPos[1], glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(0.0, 1.0, 0.0));
+        lightSpaceMatrix = lightProjection * lightView;
+
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        // 2. Use shadow shader
+        shadowShader.use();
+        // Set lightSpaceMatrix uniform (projection * view from light's POV)
+        shadowShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        // Render scene with shadow shader
+        renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,
+                    metalTextureID, shadowShaderProgram, vao, baseRotation, bicepAngle,
+                    forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot);
+
+        
         // Render the entire scene
+        glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+        //
+        // Set projection matrix for shader, this won't change
+        projectionMatrix = glm::perspective(FIELD_OF_VIEW,                       // field of view in degrees
+                                             (float)WINDOW_WIDTH / WINDOW_HEIGHT, // aspect ratio
+                                             NEAR_PLANE, FAR_PLANE);              // near and far (near > 0)
+
+    
+
+        // Set initial view matrix using camera
+        viewMatrix = camera.getViewMatrix();
+
+        // set cameraPosition
+        textureShader.setVec3("viewPos", camera.getPosition());
+
+        // Set View and Projection matrices on both shaders
+        camera.updateViewMatrix(texturedShaderProgram);
+        camera.updateViewMatrix(lightingShaderProgram);
+    
+        setProjectionMatrix(texturedShaderProgram, projectionMatrix);
+        setProjectionMatrix(lightingShaderProgram, projectionMatrix);
+
+        // 1. Set viewport to window size
+        int fbWidth, fbHeight;
+        glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
+        glViewport(0, 0, fbWidth, fbHeight);
+        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+        // render the skybox first
+        renderSkybox(camera, skyboxShaderProgram, skyboxShader, projectionMatrix, skyboxVAO, cubemapTexture);
+
+        // draw the lights
+        drawLights(LIGHT_NUMBR, lightingShaderProgram, sphereVAO, sphereVertices, lightPos, texturedShaderProgram, textureShader);
+
+        // 2. Use main shader
+        textureShader.use();
+        textureShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, depthMap);
+        textureShader.setInt("shadowMap", 1);
+
+
         renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,
                     metalTextureID, texturedShaderProgram, vao, baseRotation, bicepAngle,
                     forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot);

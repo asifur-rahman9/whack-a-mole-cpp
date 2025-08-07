@@ -19,6 +19,8 @@ bool checkCollision(vec3 hammerWorldPos, vec3 cubePosition, float baseRotation);
 
 void renderLights(int lightVAO, int lightShadingProgram, int sphereVertices, vec3 lightPos);
 
-void setAndRenderLights(int texturedShaderProgram, Shader textureShader, unsigned long millis, int lightingShaderProgram, GLuint sphereVAO, int sphereVertices);
+vec3* setLights(int LIGHT_NUMBR, int texturedShaderProgram, Shader textureShader, unsigned long millis, int lightingShaderProgram);
+
+void drawLights(int LIGHT_NUMBR, int lightingShaderProgram, GLuint sphereVAO, int sphereVertices, vec3* lightPos, int texturedShaderProgram, Shader textureShader);
 
 void renderSkybox(Camera camera, int skyboxShaderProgram, Shader skyboxShader, glm::mat4 projectionMatrix, unsigned int skyboxVAO, unsigned int cubemapTexture);
