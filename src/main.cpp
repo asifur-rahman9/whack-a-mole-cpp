@@ -77,13 +77,17 @@ int main(int argc, char *argv[])
     // Sky blue background for sky
     glClearColor(0.23f, 0.21f, 0.62f, 1.0f);
 
+    //enabling blending
+    glEnable(GL_BLEND); 	
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
     // Compile and link shaders here ...
-    Shader colorShader("./shaders/vertexShader.glsl","./shaders/fragmentShader.glsl");
+   // Shader colorShader("./shaders/vertexShader.glsl","./shaders/fragmentShader.glsl");
     Shader textureShader("./shaders/textureVertex.glsl","./shaders/textureFragment.glsl");
     Shader lightShader("./shaders/lightingVertex.glsl","./shaders/lightingFragment.glsl");
     Shader skyboxShader("./shaders/skyboxVertex.glsl","./shaders/skyboxFragment.glsl");
 
-    int colorShaderProgram = colorShader.ID;
+    //int colorShaderProgram = colorShader.ID;
     int texturedShaderProgram = textureShader.ID;
     int lightingShaderProgram = lightShader.ID;
     int skyboxShaderProgram = skyboxShader.ID;
@@ -120,18 +124,15 @@ int main(int argc, char *argv[])
                                              (float)WINDOW_WIDTH / WINDOW_HEIGHT, // aspect ratio
                                              NEAR_PLANE, FAR_PLANE);              // near and far (near > 0)
 
-    GLuint projectionMatrixLocation = glGetUniformLocation(colorShaderProgram, "projectionMatrix");
-    glUniformMatrix4fv(projectionMatrixLocation, 1, GL_FALSE, &projectionMatrix[0][0]);
+    
 
     // Set initial view matrix using camera
     mat4 viewMatrix = camera.getViewMatrix();
 
-    GLuint viewMatrixLocation = glGetUniformLocation(colorShaderProgram, "viewMatrix");
-    glUniformMatrix4fv(viewMatrixLocation, 1, GL_FALSE, &viewMatrix[0][0]);
-
     // Set View and Projection matrices on both shaders
-    camera.updateViewMatrix(colorShaderProgram, texturedShaderProgram, lightingShaderProgram);
-    setProjectionMatrix(colorShaderProgram, projectionMatrix);
+    camera.updateViewMatrix(texturedShaderProgram);
+    camera.updateViewMatrix(lightingShaderProgram);
+    
     setProjectionMatrix(texturedShaderProgram, projectionMatrix);
     setProjectionMatrix(lightingShaderProgram, projectionMatrix);
 
@@ -191,22 +192,8 @@ int main(int argc, char *argv[])
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
         // render the skybox first
-        glm::mat4 skyView = glm::mat4(glm::mat3(camera.getViewMatrix()));
-        glDepthFunc(GL_LEQUAL);
-        glDepthMask(GL_FALSE);
-
-        glUseProgram(skyboxShaderProgram);
-        skyboxShader.setMat4("view", skyView);
-        skyboxShader.setMat4("projection", projectionMatrix);
-        skyboxShader.setInt("skybox", 0);
-
-        glBindVertexArray(skyboxVAO);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
-
-        glDepthMask(GL_TRUE);
-        glDepthFunc(GL_LESS);
+        renderSkybox(camera, skyboxShaderProgram, skyboxShader, projectionMatrix, skyboxVAO, cubemapTexture);
+        
 
         // keeping track of time for adjustment with time purposes
         now = std::chrono::system_clock::now();
@@ -218,42 +205,13 @@ int main(int argc, char *argv[])
         updateGameLogic(newCube, cubeRad, cubeRot, cubeY, millis, baseTime, reset);
 
         //update lighting parameters
-        glUseProgram(texturedShaderProgram);
-        const int LIGHT_NUMBR = 5;
-        float lightRad[LIGHT_NUMBR];
-        float val =  (float)((millis / 10) % 3600);
-        lightRad[0] = radians(val);
-        lightRad[1] = radians(2.0 * val + 45);
-        lightRad[2] = radians(1.2 * val + 90);
-        lightRad[3] = radians(0.8 * val);
-        lightRad[4] = radians(1.3 * val);
-        //cout << val << endl;
+        setAndRenderLights(texturedShaderProgram, textureShader, millis, lightingShaderProgram, sphereVAO, sphereVertices);
 
-
-        vec3 lightPos[LIGHT_NUMBR];
-        lightPos[0] = vec3(40.f * sin(lightRad[0]), 50.f, 40.f* cos(lightRad[0]));
-        lightPos[1] = vec3(45.f* sin(lightRad[1]), 60.f, 45.f* cos(lightRad[1]));
-        lightPos[2] = vec3(40.f* sin(lightRad[2]), 40.f, 20.f* cos(lightRad[2]));
-        lightPos[3] = vec3(50.f* sin(lightRad[3]), 35.f, 50.f* cos(lightRad[3]));
-        lightPos[4] = vec3(25.f* sin(lightRad[4]), 30.f, 40.f* cos(lightRad[4]));
-
-        
-        textureShader.setVec3("lightColor", 0.7f, 0.7f, 0.7f);
-        for(int i = 0; i < LIGHT_NUMBR; i++){
-            string lightNo = "lightPos[" + to_string(i) + "]";
-            glUseProgram(lightingShaderProgram);
-
-            renderLights(sphereVAO, lightingShaderProgram, sphereVertices, lightPos[i]); 
-
-            glUseProgram(texturedShaderProgram);
-            
-            textureShader.setVec3(lightNo, lightPos[i]);
-        }
-        
-        //glUniform3fv(glGetUniformLocation(texturedShaderProgram, "lightPos"), 10, lightPos);
-
+        // set cameraPosition
         textureShader.setVec3("viewPos", camera.getPosition());
 
+        //render the Shadow map !!
+        
         // Render the entire scene
         renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,
                     metalTextureID, texturedShaderProgram, vao, baseRotation, bicepAngle,
@@ -293,7 +251,8 @@ int main(int argc, char *argv[])
         handleRobotArmInput(window, bicepAngle, forearmAngle, baseRotation);
 
         // Update view matrix using camera
-        camera.updateViewMatrix(colorShaderProgram, texturedShaderProgram, lightingShaderProgram);
+        camera.updateViewMatrix(texturedShaderProgram);
+        camera.updateViewMatrix(lightingShaderProgram);
     }
     cout << "Total points: " << points << "!!" << endl;
 

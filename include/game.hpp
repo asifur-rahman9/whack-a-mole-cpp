@@ -1,6 +1,8 @@
 #pragma once
 #include <GL/glew.h>
 #include <glm/glm.hpp>
+#include "camera.hpp"
+#include "shaders.hpp"
 
 using namespace glm;
 
@@ -16,3 +18,7 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
 bool checkCollision(vec3 hammerWorldPos, vec3 cubePosition, float baseRotation);
 
 void renderLights(int lightVAO, int lightShadingProgram, int sphereVertices, vec3 lightPos);
+
+void setAndRenderLights(int texturedShaderProgram, Shader textureShader, unsigned long millis, int lightingShaderProgram, GLuint sphereVAO, int sphereVertices);
+
+void renderSkybox(Camera camera, int skyboxShaderProgram, Shader skyboxShader, glm::mat4 projectionMatrix, unsigned int skyboxVAO, unsigned int cubemapTexture);

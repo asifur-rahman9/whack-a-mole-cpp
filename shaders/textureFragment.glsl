@@ -9,18 +9,20 @@ uniform vec3 viewPos;
 uniform vec3 lightColor;
 uniform sampler2D textureSampler;
 uniform float specularStrength = 0.5;
+uniform float ambientStrength = 0.1;
+uniform int lightNo = 5;
 
 out vec4 FragColor;
 void main()
 {
-    float ambientStrength = 0.1;
+    
     vec3 ambient = ambientStrength * lightColor;
 
     // diffuse 
     vec3 diffuse = vec3(0.0f);
     vec3 specular = vec3(0.0f);
 
-    for(int i = 0; i < 5; i++){
+    for(int i = 0; i < lightNo; i++){
         vec3 norm = normalize(Normal);
         vec3 lightDir = normalize(lightPos[i] - FragPos);
         float diff = max(dot(norm, lightDir), 0.0);
@@ -39,7 +41,7 @@ void main()
         specular += specularStrength * spec * lightColor * attenuation;  
     }
 
-    diffuse = diffuse / 10.f;
+    diffuse = diffuse / 8.f;
     specular = specular / 10.f;
     
 

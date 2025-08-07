@@ -215,6 +215,7 @@ void setWorldMatrix(int shaderProgram, mat4 worldMatrix)
     glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &worldMatrix[0][0]);
 }
 
+// loading the maop for the skybox
 unsigned int loadCubemap(vector<std::string> faces)
 {
     unsigned int textureID;
@@ -243,7 +244,7 @@ unsigned int loadCubemap(vector<std::string> faces)
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
-    
+
 
     return textureID;
 }  
@@ -251,7 +252,7 @@ unsigned int loadCubemap(vector<std::string> faces)
 
 
 
-
+// creating the cube for the skybox
 void generateSkyboxVertices( unsigned int* skyboxVAO, unsigned int* skyboxVBO){
     float skyboxVertices[108] = {
     // positions          

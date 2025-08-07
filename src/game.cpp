@@ -2,6 +2,8 @@
 #include "graphics.hpp"
 #include "constants.hpp"
 #include "arm.hpp"
+#include "shaders.hpp"
+#include "camera.hpp"
 #include <iostream>
 #include <cstdlib>
 #include <cmath>
@@ -53,12 +55,14 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
     glBindVertexArray(vao);
 
     // Draw ground
-    glUniform1f(glGetUniformLocation(texturedShaderProgram, "specularStrength"), 0.2f);
+    glUniform1f(glGetUniformLocation(texturedShaderProgram, "ambientStrength"), 0.1f);
+    glUniform1f(glGetUniformLocation(texturedShaderProgram, "specularStrength"), 0.1f);
     mat4 groundWorldMatrix = translate(mat4(1.0f), vec3(0.0f, -0.01f, 0.0f)) * scale(mat4(1.0f), vec3(1000.0f, 0.02f, 1000.0f));
     setWorldMatrix(texturedShaderProgram, groundWorldMatrix);
     glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
 
     // Render all arm components using the dedicated arm module
+    glUniform1f(glGetUniformLocation(texturedShaderProgram, "ambientStrength"), 0.2f);
     glUniform1f(glGetUniformLocation(texturedShaderProgram, "specularStrength"), 0.5f);
     renderArmComponents(cementTopTextureID, cementBaseTextureID, woodTextureID, metalTextureID,
                         texturedShaderProgram, baseRotation, bicepAngle, forearmAngle,
@@ -70,6 +74,8 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
     setWorldMatrix(texturedShaderProgram, cubeMatrix);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
+    glUniform1f(glGetUniformLocation(texturedShaderProgram, "ambientStrength"), 0.1f);
+
 
 
 }
@@ -80,12 +86,92 @@ void renderLights(int lightVAO, int lightShadingProgram, int sphereVertices, vec
     glBindVertexArray(lightVAO);
 
     // Draw each of the spheres
-    mat4 lightWorldMatrix = translate(mat4(1.0f), lightPos) * scale(mat4(1.0f), vec3(0.5f, 0.5f, 0.5f));
+    glUniform1f(glGetUniformLocation(lightShadingProgram, "alpha"), 0.4f);
+    mat4 lightWorldMatrix = translate(mat4(1.0f), lightPos) * scale(mat4(1.0f), vec3(0.3f, 0.3f, 0.3f));
+    setWorldMatrix(lightShadingProgram, lightWorldMatrix);
+    glDrawArrays(GL_TRIANGLES, 0, sphereVertices); // counting the sphere vertices
+
+    // Draw each of the spheres
+    glUniform1f(glGetUniformLocation(lightShadingProgram, "alpha"), 0.4f);
+    lightWorldMatrix = translate(mat4(1.0f), lightPos) * scale(mat4(1.0f), vec3(0.35f, 0.35f, 0.35f));
+    setWorldMatrix(lightShadingProgram, lightWorldMatrix);
+    glDrawArrays(GL_TRIANGLES, 0, sphereVertices); // counting the sphere vertices
+
+    // Draw each of the spheres
+    glUniform1f(glGetUniformLocation(lightShadingProgram, "alpha"), 0.4f);
+    lightWorldMatrix = translate(mat4(1.0f), lightPos) * scale(mat4(1.0f), vec3(0.4f, 0.4f, 0.4f));
+    setWorldMatrix(lightShadingProgram, lightWorldMatrix);
+    glDrawArrays(GL_TRIANGLES, 0, sphereVertices); // counting the sphere vertices
+
+     // Draw each of the spheres
+    glUniform1f(glGetUniformLocation(lightShadingProgram, "alpha"), 0.3f);
+    lightWorldMatrix = translate(mat4(1.0f), lightPos) * scale(mat4(1.0f), vec3(0.45f, 0.45f, 0.45f));
+    setWorldMatrix(lightShadingProgram, lightWorldMatrix);
+    glDrawArrays(GL_TRIANGLES, 0, sphereVertices); // counting the sphere vertices
+
+    // Draw each of the spheres
+    glUniform1f(glGetUniformLocation(lightShadingProgram, "alpha"), 0.2f);
+    lightWorldMatrix = translate(mat4(1.0f), lightPos) * scale(mat4(1.0f), vec3(0.5f, 0.5f, 0.5f));
     setWorldMatrix(lightShadingProgram, lightWorldMatrix);
     glDrawArrays(GL_TRIANGLES, 0, sphereVertices); // counting the sphere vertices
 
     
 
+
+}
+
+void setAndRenderLights(int texturedShaderProgram, Shader textureShader, unsigned long millis, int lightingShaderProgram, GLuint sphereVAO, int sphereVertices){
+            //update lighting parameters
+        glUseProgram(texturedShaderProgram);
+        const int LIGHT_NUMBR = 5;
+        textureShader.setInt("lightNo", LIGHT_NUMBR);
+        float lightRad[LIGHT_NUMBR];
+        float val =  (float)((millis / 10) % 3600);
+        lightRad[0] = radians(val);
+        lightRad[1] = radians(2.0 * val + 45);
+        lightRad[2] = radians(1.2 * val + 90);
+        lightRad[3] = radians(0.8 * val);
+        lightRad[4] = radians(1.3 * val);
+       
+
+        // set the position of each light
+        vec3 lightPos[LIGHT_NUMBR];
+        lightPos[0] = vec3(40.f * sin(lightRad[0]), 38.f, 40.f* cos(lightRad[0]));
+        lightPos[1] = vec3(45.f* sin(lightRad[1]), 60.f, 45.f* cos(lightRad[1]));
+        lightPos[2] = vec3(40.f* sin(lightRad[2]), 40.f, 20.f* cos(lightRad[2]));
+        lightPos[3] = vec3(50.f* sin(lightRad[3]), 35.f, 50.f* cos(lightRad[3]));
+        lightPos[4] = vec3(25.f* sin(lightRad[4]), 30.f, 40.f* cos(lightRad[4]));
+
+        //render each light and set its position in the texture shader
+        textureShader.setVec3("lightColor", 0.7f, 0.7f, 0.7f);
+        
+        for(int i = 0; i < LIGHT_NUMBR; i++){
+            glUseProgram(lightingShaderProgram);
+            renderLights(sphereVAO, lightingShaderProgram, sphereVertices, lightPos[i]); 
+
+            string lightNo = "lightPos[" + to_string(i) + "]";
+            glUseProgram(texturedShaderProgram);
+            textureShader.setVec3(lightNo, lightPos[i]);
+        }
+}
+
+void renderSkybox(Camera camera, int skyboxShaderProgram, Shader skyboxShader, glm::mat4 projectionMatrix, unsigned int skyboxVAO, unsigned int cubemapTexture){
+    glm::mat4 skyView = glm::mat4(glm::mat3(camera.getViewMatrix()));
+        glDepthFunc(GL_LEQUAL);
+        glDepthMask(GL_FALSE);
+
+        glUseProgram(skyboxShaderProgram);
+        skyboxShader.setMat4("view", skyView);
+        skyboxShader.setMat4("projection", projectionMatrix);
+        skyboxShader.setInt("skybox", 0);
+
+        glBindVertexArray(skyboxVAO);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+        glDrawArrays(GL_TRIANGLES, 0, 36);
+
+        glDepthMask(GL_TRUE);
+        glDepthFunc(GL_LESS);
 
 }
 

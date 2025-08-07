@@ -35,7 +35,7 @@ public:
 
     // Camera control methods
     void handleInput(GLFWwindow *window, float deltaTime);
-    void updateViewMatrix(int colorShaderProgram, int texturedShaderProgram, int lightingShaderProgram);
+    void updateViewMatrix(int shaderProgram);
 
     // Getters
     vec3 getPosition() const { return position; }
