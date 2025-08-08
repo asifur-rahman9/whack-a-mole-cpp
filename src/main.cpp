@@ -97,11 +97,21 @@ int main(int argc, char *argv[])
 
     // load object models
     // Setup models
+    //load sphere coordinates
     string spherePath = "models/sphere.obj";
-
-    // load the sphere coordinates
     int sphereVertices;
     GLuint sphereVAO = setupModelVBO(spherePath, sphereVertices);
+
+    // load the cylinder coordinates
+    string cylinderPath = "models/cylinder.obj";
+    int cylinderVertices;
+    GLuint cylinderVAO = setupModelVBO(cylinderPath, cylinderVertices);
+
+    // load the cube coordinates
+    string cubePath = "models/cube.obj";
+    int cubeVertices;
+    GLuint cubeVAO = setupModelVBO(cubePath, cubeVertices);
+
 
     // load the skybox cube
     vector<std::string> faces = {
@@ -257,9 +267,9 @@ int main(int argc, char *argv[])
         shadowShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
                 // Render scene with shadow shader
         renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,
-                    metalTextureID, shadowShaderProgram, vao, baseRotation, bicepAngle,
-                    forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot,
-                    vao, sphereVAO, sphereVertices);
+            metalTextureID, shadowShaderProgram, vao, baseRotation, bicepAngle,
+            forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot,
+            sphereVAO, sphereVertices, cylinderVAO, cylinderVertices, cubeVertices);
 
 
 
@@ -310,9 +320,11 @@ int main(int argc, char *argv[])
         glBindTexture(GL_TEXTURE_2D, depthMap);
         textureShader.setInt("shadowMap", 1);
 
-
-        renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID, metalTextureID, texturedShaderProgram, vao, baseRotation, bicepAngle, forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot, vao, sphereVAO, sphereVertices);
-
+        // Render scene
+        renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,
+            metalTextureID, texturedShaderProgram, vao, baseRotation, bicepAngle,
+            forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot,
+            sphereVAO, sphereVertices, cylinderVAO, cylinderVertices, cubeVertices);
 
         // Check for collision between hammer and cube
         vec3 hammerWorldPos = calculateHammerPosition(baseRotation, bicepAngle, forearmAngle, bicepLength, forearmLength);

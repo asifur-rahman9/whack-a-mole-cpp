@@ -27,7 +27,9 @@ void renderArmComponents(GLuint cementTopTextureID, GLuint cementBaseTextureID,
                          int texturedShaderProgram, float baseRotation,
                          float bicepAngle, float forearmAngle,
                          float bicepLength, float forearmLength,
-                         GLuint cubeVAO, GLuint sphereVAO, int sphereVertices)
+                         GLuint cubeVAO, GLuint sphereVAO, int sphereVertices,
+                         GLuint cylinderVAO, int cylinderVertices,
+                         int cubeVertices)
 {
     // Binding Sphere VAO for all sphere components and cube VAO for all cube components
     glBindVertexArray(sphereVAO);
@@ -46,21 +48,23 @@ void renderArmComponents(GLuint cementTopTextureID, GLuint cementBaseTextureID,
     mat4 bigBaseMatrix = translate(mat4(1.0f), vec3(5.0f, 1.f, 5.0f)) *
                          scale(mat4(1.0f), vec3(6.1f, 1.6f, 6.1f));
     setWorldMatrix(texturedShaderProgram, bigBaseMatrix);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glDrawArrays(GL_TRIANGLES, 0, cubeVertices);
 
     // Create base rotation matrix for all arm components
     mat4 baseRotationMatrix = rotate(mat4(1.0f), radians(baseRotation), vec3(0.0f, 1.0f, 0.0f));
 
-    // Create bicep (cube)
+    // Create bicep (cylinder)
+    glBindVertexArray(cylinderVAO);
     glBindTexture(GL_TEXTURE_2D, woodTextureID);
     vec3 bicepLocalPos = vec3(0.0f, bicepLength / 2 * cos(radians(bicepAngle)), bicepLength / 2 * sin(radians(bicepAngle)));
     vec3 bicepWorldPos = vec3(baseRotationMatrix * vec4(bicepLocalPos, 1.0f)) + vec3(5.0f, 0.0f, 5.0f);
     mat4 bicepMatrix = translate(mat4(1.0f), bicepWorldPos) *
                        baseRotationMatrix *
                        rotate(mat4(1.0f), radians(bicepAngle), vec3(1.0f, 0.0f, 0.0f)) *
-                       scale(mat4(1.0f), vec3(1.0f, bicepLength, 1.0f));
+                       translate(mat4(1.0f), vec3(0.0f, -1.0f, 0.0f)) *
+                       scale(mat4(1.0f), vec3(0.5f, bicepLength/4.0f, 0.5f));
     setWorldMatrix(texturedShaderProgram, bicepMatrix);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glDrawArrays(GL_TRIANGLES, 0, cylinderVertices);
 
     // Create joint (sphere)
     glBindVertexArray(sphereVAO);
@@ -76,8 +80,8 @@ void renderArmComponents(GLuint cementTopTextureID, GLuint cementBaseTextureID,
     setWorldMatrix(texturedShaderProgram, hingeMatrix);
     glDrawArrays(GL_TRIANGLES, 0, sphereVertices);
 
-    // Create forearm (cube )
-    glBindVertexArray(cubeVAO);
+    // Create forearm (cylinder)
+    glBindVertexArray(cylinderVAO);
     glBindTexture(GL_TEXTURE_2D, woodTextureID);
     float totalAngle = forearmAngle + bicepAngle;
     vec3 forearmLocalPos = vec3(0.0f, forearmLength / 2 * cos(radians(totalAngle)) + jointHeight,
@@ -86,11 +90,13 @@ void renderArmComponents(GLuint cementTopTextureID, GLuint cementBaseTextureID,
     mat4 foreArmMatrix = translate(mat4(1.0f), forearmWorldPos) *
                          baseRotationMatrix *
                          rotate(mat4(1.0f), radians(totalAngle), vec3(1.0f, 0.0f, 0.0f)) *
-                         scale(mat4(1.0f), vec3(1.0f, forearmLength, 1.0f));
+                         translate(mat4(1.0f), vec3(0.0f, -1.0f, 0.0f)) *
+                         scale(mat4(1.0f), vec3(0.45f, forearmLength/4.0f, 0.45f));
     setWorldMatrix(texturedShaderProgram, foreArmMatrix);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glDrawArrays(GL_TRIANGLES, 0, cylinderVertices);
 
     // Create Hammer (cube)
+    glBindVertexArray(cubeVAO);
     glBindTexture(GL_TEXTURE_2D, metalTextureID);
     vec3 hammerLocalPos = vec3(0.0f, forearmLength * cos(radians(totalAngle)) + jointHeight,
                                jointHorizontal + forearmLength * sin(radians(totalAngle)));
@@ -98,7 +104,7 @@ void renderArmComponents(GLuint cementTopTextureID, GLuint cementBaseTextureID,
     mat4 hammerMatrix = translate(mat4(1.0f), hammerWorldPos) *
                         baseRotationMatrix *
                         rotate(mat4(1.0f), radians(totalAngle), vec3(1.0f, 0.0f, 0.0f)) *
-                        scale(mat4(1.0f), vec3(2.0f, 2.0f, 8.0f));
+                        scale(mat4(1.0f), vec3(3.0f, 3.0f, 8.0f));
     setWorldMatrix(texturedShaderProgram, hammerMatrix);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glDrawArrays(GL_TRIANGLES, 0, cubeVertices);
 }

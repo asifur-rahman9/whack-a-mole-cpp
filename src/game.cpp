@@ -43,7 +43,9 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
                  GLuint woodTextureID, GLuint metalTextureID, int texturedShaderProgram, int vao,
                  float baseRotation, float bicepAngle, float forearmAngle, float bicepLength,
                  float forearmLength, float cubeX, float cubeY, float cubeRad, float cubeRot,
-                 GLuint cubeVAO, GLuint sphereVAO, int sphereVertices)
+                 GLuint sphereVAO, int sphereVertices,
+                 GLuint cylinderVAO, int cylinderVertices,
+                 int cubeVertices)
 {
     // Enable our texture shader program, set the texture location, bind the texture
 
@@ -60,20 +62,21 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
     glUniform1f(glGetUniformLocation(texturedShaderProgram, "specularStrength"), 0.1f);
     mat4 groundWorldMatrix = translate(mat4(1.0f), vec3(0.0f, -0.01f, 0.0f)) * scale(mat4(1.0f), vec3(1000.0f, 0.02f, 1000.0f));
     setWorldMatrix(texturedShaderProgram, groundWorldMatrix);
-    glDrawArrays(GL_TRIANGLES, 0, 36); // 36 vertices, starting at index 0
+    glDrawArrays(GL_TRIANGLES, 0, cubeVertices);
 
     // Render all arm components using the dedicated arm module
     glUniform1f(glGetUniformLocation(texturedShaderProgram, "ambientStrength"), 0.2f);
     glUniform1f(glGetUniformLocation(texturedShaderProgram, "specularStrength"), 0.5f);
     renderArmComponents(cementTopTextureID, cementBaseTextureID, woodTextureID, metalTextureID,
                         texturedShaderProgram, baseRotation, bicepAngle, forearmAngle,
-                        bicepLength, forearmLength, cubeVAO, sphereVAO, sphereVertices);
+                        bicepLength, forearmLength, vao, sphereVAO, sphereVertices,
+                        cylinderVAO, cylinderVertices, cubeVertices);
 
     // draw cube
     vec3 cubePosition = vec3(cubeX + (cubeRad * sin(cubeRot)), cubeY, cubeRad * cos(cubeRot));
     mat4 cubeMatrix = translate(mat4(1.0f), cubePosition) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 2.0f));
     setWorldMatrix(texturedShaderProgram, cubeMatrix);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glDrawArrays(GL_TRIANGLES, 0, cubeVertices);
 
     glUniform1f(glGetUniformLocation(texturedShaderProgram, "ambientStrength"), 0.1f);
 
