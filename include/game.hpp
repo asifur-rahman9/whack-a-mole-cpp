@@ -13,7 +13,8 @@ void updateGameLogic(bool &newCube, float &cubeRad, float &cubeRot, float &cubeY
 void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cementBaseTextureID,
                  GLuint woodTextureID, GLuint metalTextureID, int texturedShaderProgram, int vao,
                  float baseRotation, float bicepAngle, float forearmAngle, float bicepLength,
-                 float forearmLength, float cubeX, float cubeY, float cubeRad, float cubeRot);
+                 float forearmLength, float cubeX, float cubeY, float cubeRad, float cubeRot,
+                 GLuint cubeVAO, GLuint sphereVAO, int sphereVertices);
 
 bool checkCollision(vec3 hammerWorldPos, vec3 cubePosition, float baseRotation);
 

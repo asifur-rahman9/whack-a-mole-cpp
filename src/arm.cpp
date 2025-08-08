@@ -26,17 +26,22 @@ void renderArmComponents(GLuint cementTopTextureID, GLuint cementBaseTextureID,
                          GLuint woodTextureID, GLuint metalTextureID,
                          int texturedShaderProgram, float baseRotation,
                          float bicepAngle, float forearmAngle,
-                         float bicepLength, float forearmLength)
+                         float bicepLength, float forearmLength,
+                         GLuint cubeVAO, GLuint sphereVAO, int sphereVertices)
 {
-    // Bicep base
+    // Binding Sphere VAO for all sphere components and cube VAO for all cube components
+    glBindVertexArray(sphereVAO);
+
+    // Bicep base (sphere)
     glBindTexture(GL_TEXTURE_2D, cementTopTextureID);
     mat4 baseMatrix = translate(mat4(1.0f), vec3(5.0f, 1.f, 5.0f)) *
                       rotate(mat4(1.0f), radians(baseRotation + 180.0f), vec3(0.0f, 1.0f, 0.0f)) *
-                      scale(mat4(1.0f), vec3(4.1f, 2.4f, 4.1f));
+                      scale(mat4(1.0f), vec3(0.45f, 0.4f, 0.45f));
     setWorldMatrix(texturedShaderProgram, baseMatrix);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glDrawArrays(GL_TRIANGLES, 0, sphereVertices);
 
-    // Larger fixed base
+    // Larger fixed base (cube)
+     glBindVertexArray(cubeVAO);
     glBindTexture(GL_TEXTURE_2D, cementBaseTextureID);
     mat4 bigBaseMatrix = translate(mat4(1.0f), vec3(5.0f, 1.f, 5.0f)) *
                          scale(mat4(1.0f), vec3(6.1f, 1.6f, 6.1f));
@@ -46,7 +51,7 @@ void renderArmComponents(GLuint cementTopTextureID, GLuint cementBaseTextureID,
     // Create base rotation matrix for all arm components
     mat4 baseRotationMatrix = rotate(mat4(1.0f), radians(baseRotation), vec3(0.0f, 1.0f, 0.0f));
 
-    // Create bicep
+    // Create bicep (cube)
     glBindTexture(GL_TEXTURE_2D, woodTextureID);
     vec3 bicepLocalPos = vec3(0.0f, bicepLength / 2 * cos(radians(bicepAngle)), bicepLength / 2 * sin(radians(bicepAngle)));
     vec3 bicepWorldPos = vec3(baseRotationMatrix * vec4(bicepLocalPos, 1.0f)) + vec3(5.0f, 0.0f, 5.0f);
@@ -57,7 +62,9 @@ void renderArmComponents(GLuint cementTopTextureID, GLuint cementBaseTextureID,
     setWorldMatrix(texturedShaderProgram, bicepMatrix);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
-    // Create joint
+    // Create joint (sphere)
+    glBindVertexArray(sphereVAO);
+    glBindTexture(GL_TEXTURE_2D, metalTextureID);
     float jointHeight = bicepLength * cos(radians(bicepAngle));
     float jointHorizontal = bicepLength * sin(radians(bicepAngle));
     vec3 jointLocalPos = vec3(0.0f, jointHeight, jointHorizontal);
@@ -65,11 +72,13 @@ void renderArmComponents(GLuint cementTopTextureID, GLuint cementBaseTextureID,
     mat4 hingeMatrix = translate(mat4(1.0f), jointWorldPos) *
                        baseRotationMatrix *
                        rotate(mat4(1.0f), radians(forearmAngle + bicepAngle), vec3(1.0f, 0.0f, 0.0f)) *
-                       scale(mat4(1.0f), vec3(2.1f, 2.1f, 2.1f));
+                       scale(mat4(1.0f), vec3(0.35f, 0.35f, 0.35f));
     setWorldMatrix(texturedShaderProgram, hingeMatrix);
-    glDrawArrays(GL_TRIANGLES, 0, 36);
+    glDrawArrays(GL_TRIANGLES, 0, sphereVertices);
 
-    // Create forearm
+    // Create forearm (cube )
+    glBindVertexArray(cubeVAO);
+    glBindTexture(GL_TEXTURE_2D, woodTextureID);
     float totalAngle = forearmAngle + bicepAngle;
     vec3 forearmLocalPos = vec3(0.0f, forearmLength / 2 * cos(radians(totalAngle)) + jointHeight,
                                 jointHorizontal + forearmLength / 2 * sin(radians(totalAngle)));
@@ -81,7 +90,7 @@ void renderArmComponents(GLuint cementTopTextureID, GLuint cementBaseTextureID,
     setWorldMatrix(texturedShaderProgram, foreArmMatrix);
     glDrawArrays(GL_TRIANGLES, 0, 36);
 
-    // Create Hammer
+    // Create Hammer (cube)
     glBindTexture(GL_TEXTURE_2D, metalTextureID);
     vec3 hammerLocalPos = vec3(0.0f, forearmLength * cos(radians(totalAngle)) + jointHeight,
                                jointHorizontal + forearmLength * sin(radians(totalAngle)));

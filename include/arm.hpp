@@ -14,4 +14,5 @@ void renderArmComponents(GLuint cementTopTextureID, GLuint cementBaseTextureID,
                          GLuint woodTextureID, GLuint metalTextureID,
                          int texturedShaderProgram, float baseRotation,
                          float bicepAngle, float forearmAngle,
-                         float bicepLength, float forearmLength);
+                         float bicepLength, float forearmLength,
+                         GLuint cubeVAO, GLuint sphereVAO, int sphereVertices);

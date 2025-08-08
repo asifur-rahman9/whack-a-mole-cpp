@@ -42,10 +42,11 @@ void updateGameLogic(bool &newCube, float &cubeRad, float &cubeRot, float &cubeY
 void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cementBaseTextureID,
                  GLuint woodTextureID, GLuint metalTextureID, int texturedShaderProgram, int vao,
                  float baseRotation, float bicepAngle, float forearmAngle, float bicepLength,
-                 float forearmLength, float cubeX, float cubeY, float cubeRad, float cubeRot)
+                 float forearmLength, float cubeX, float cubeY, float cubeRad, float cubeRot,
+                 GLuint cubeVAO, GLuint sphereVAO, int sphereVertices)
 {
     // Enable our texture shader program, set the texture location, bind the texture
-    
+
     glActiveTexture(GL_TEXTURE0);
     GLuint textureLocation = glGetUniformLocation(texturedShaderProgram, "textureSampler");
     glBindTexture(GL_TEXTURE_2D, grassTextureID);
@@ -66,7 +67,7 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
     glUniform1f(glGetUniformLocation(texturedShaderProgram, "specularStrength"), 0.5f);
     renderArmComponents(cementTopTextureID, cementBaseTextureID, woodTextureID, metalTextureID,
                         texturedShaderProgram, baseRotation, bicepAngle, forearmAngle,
-                        bicepLength, forearmLength);
+                        bicepLength, forearmLength, cubeVAO, sphereVAO, sphereVertices);
 
     // draw cube
     vec3 cubePosition = vec3(cubeX + (cubeRad * sin(cubeRot)), cubeY, cubeRad * cos(cubeRot));
@@ -82,7 +83,7 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
 
 void renderLights(int lightVAO, int lightShadingProgram, int sphereVertices, vec3 lightPos){
     // Bind the appropriate VAO
-    
+
     glBindVertexArray(lightVAO);
 
     // Draw each of the spheres
@@ -115,7 +116,7 @@ void renderLights(int lightVAO, int lightShadingProgram, int sphereVertices, vec
     setWorldMatrix(lightShadingProgram, lightWorldMatrix);
     glDrawArrays(GL_TRIANGLES, 0, sphereVertices); // counting the sphere vertices
 
-    
+
 
 
 }
@@ -132,7 +133,7 @@ vec3* setLights(int LIGHT_NUMBR, int texturedShaderProgram, Shader textureShader
         lightRad[2] = radians(1.2 * val + 90);
         lightRad[3] = radians(0.8 * val);
         lightRad[4] = radians(1.3 * val);
-       
+
 
         // set the position of each light
         vec3* lightPos = new vec3[LIGHT_NUMBR];
@@ -144,8 +145,8 @@ vec3* setLights(int LIGHT_NUMBR, int texturedShaderProgram, Shader textureShader
 
         //render each light and set its position in the texture shader
         textureShader.setVec3("lightColor", 0.7f, 0.7f, 0.7f);
-        
-        
+
+
 
         return lightPos;
 }
@@ -154,7 +155,7 @@ void drawLights(int LIGHT_NUMBR, int lightingShaderProgram, GLuint sphereVAO, in
 
     for(int i = 0; i < LIGHT_NUMBR; i++){
             glUseProgram(lightingShaderProgram);
-            renderLights(sphereVAO, lightingShaderProgram, sphereVertices, lightPos[i]); 
+            renderLights(sphereVAO, lightingShaderProgram, sphereVertices, lightPos[i]);
 
             string lightNo = "lightPos[" + to_string(i) + "]";
             glUseProgram(texturedShaderProgram);

@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
     glClearColor(0.23f, 0.21f, 0.62f, 1.0f);
 
     //enabling blending
-    glEnable(GL_BLEND); 	
+    glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Compile and link shaders here ...
@@ -98,7 +98,7 @@ int main(int argc, char *argv[])
     // load object models
     // Setup models
     string spherePath = "models/sphere.obj";
-    
+
     // load the sphere coordinates
     int sphereVertices;
     GLuint sphereVAO = setupModelVBO(spherePath, sphereVertices);
@@ -112,8 +112,8 @@ int main(int argc, char *argv[])
     "textures/skybox/front.jpg",
     "textures/skybox/back.jpg"
     };
-    unsigned int cubemapTexture = loadCubemap(faces); 
-    
+    unsigned int cubemapTexture = loadCubemap(faces);
+
 
     // We can set the shader once, since we have only one
     glUseProgram(texturedShaderProgram);
@@ -126,7 +126,7 @@ int main(int argc, char *argv[])
                                              (float)WINDOW_WIDTH / WINDOW_HEIGHT, // aspect ratio
                                              NEAR_PLANE, FAR_PLANE);              // near and far (near > 0)
 
-    
+
 
     // Set initial view matrix using camera
     mat4 viewMatrix = camera.getViewMatrix();
@@ -134,7 +134,7 @@ int main(int argc, char *argv[])
     // Set View and Projection matrices on both shaders
     camera.updateViewMatrix(texturedShaderProgram);
     camera.updateViewMatrix(lightingShaderProgram);
-    
+
     setProjectionMatrix(texturedShaderProgram, projectionMatrix);
     setProjectionMatrix(lightingShaderProgram, projectionMatrix);
 
@@ -161,7 +161,7 @@ int main(int argc, char *argv[])
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
     float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor); 
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
     // attach depth texture as FBO's depth buffer
     glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
     glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
@@ -207,8 +207,6 @@ int main(int argc, char *argv[])
     // Entering Main Loop
     while (!glfwWindowShouldClose(window))
     {
-        
-
 
         // Frame time calculation
         float dt = glfwGetTime() - lastFrameTime;
@@ -219,7 +217,7 @@ int main(int argc, char *argv[])
 
         // render the skybox first
         //renderSkybox(camera, skyboxShaderProgram, skyboxShader, projectionMatrix, skyboxVAO, cubemapTexture);
-        
+
 
         // keeping track of time for adjustment with time purposes
         now = std::chrono::system_clock::now();
@@ -239,7 +237,7 @@ int main(int argc, char *argv[])
 
         //render the Shadow map !!
         glCullFace(GL_FRONT);
-        
+
         glm::mat4 lightProjection, lightView;
         glm::mat4 lightSpaceMatrix;
         float near_plane = 1.0f, far_plane = 300.0f;
@@ -257,12 +255,13 @@ int main(int argc, char *argv[])
         shadowShader.use();
         // Set lightSpaceMatrix uniform (projection * view from light's POV)
         shadowShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
-        // Render scene with shadow shader
+                // Render scene with shadow shader
         renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,
                     metalTextureID, shadowShaderProgram, vao, baseRotation, bicepAngle,
-                    forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot);
+                    forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot,
+                    vao, sphereVAO, sphereVertices);
 
-        
+
 
 
 
@@ -277,7 +276,7 @@ int main(int argc, char *argv[])
                                              (float)WINDOW_WIDTH / WINDOW_HEIGHT, // aspect ratio
                                              NEAR_PLANE, FAR_PLANE);              // near and far (near > 0)
 
-    
+
 
         // Set initial view matrix using camera
         viewMatrix = camera.getViewMatrix();
@@ -288,7 +287,7 @@ int main(int argc, char *argv[])
         // Set View and Projection matrices on both shaders
         camera.updateViewMatrix(texturedShaderProgram);
         camera.updateViewMatrix(lightingShaderProgram);
-    
+
         setProjectionMatrix(texturedShaderProgram, projectionMatrix);
         setProjectionMatrix(lightingShaderProgram, projectionMatrix);
 
@@ -312,14 +311,9 @@ int main(int argc, char *argv[])
         textureShader.setInt("shadowMap", 1);
 
 
-        renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,
-                    metalTextureID, texturedShaderProgram, vao, baseRotation, bicepAngle,
-                    forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot);
+        renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID, metalTextureID, texturedShaderProgram, vao, baseRotation, bicepAngle, forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot, vao, sphereVAO, sphereVertices);
 
-        
-        
-                    
-       
+
         // Check for collision between hammer and cube
         vec3 hammerWorldPos = calculateHammerPosition(baseRotation, bicepAngle, forearmAngle, bicepLength, forearmLength);
         vec3 cubePosition = vec3(cubeX + (cubeRad * sin(cubeRot)), cubeY, cubeRad * cos(cubeRot));
@@ -333,7 +327,7 @@ int main(int argc, char *argv[])
             cout << "Current score: " << points << " points!" << endl;
         }
 
-        
+
 
         // End Frame
         glfwSwapBuffers(window);
