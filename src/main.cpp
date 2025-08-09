@@ -32,6 +32,7 @@ using namespace glm;
 using namespace std;
 
 GLuint setupModelVBO(string path, int& vertexCount);
+vector<unsigned int> createShadowBuffer();
 
 // main function
 int main(int argc, char *argv[])
@@ -159,44 +160,17 @@ int main(int argc, char *argv[])
     // configure depth map FBO
     // -----------------------
     const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
-    unsigned int depthMapFBO;
-    glGenFramebuffers(1, &depthMapFBO);
-    // create depth texture
-    unsigned int depthMap;
-    glGenTextures(1, &depthMap);
-    glBindTexture(GL_TEXTURE_2D, depthMap);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-    // attach depth texture as FBO's depth buffer
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+    const int LIGHT_NUMBR = 5;
+    unsigned int depthMapFBO[LIGHT_NUMBR];
+    unsigned int depthMap[LIGHT_NUMBR];
 
-    unsigned int depthMapFBO2;
-    glGenFramebuffers(1, &depthMapFBO2);
-    unsigned int depthMap2;
-    glGenTextures(1, &depthMap2);
-    glBindTexture(GL_TEXTURE_2D, depthMap2);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
-    
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
-    // attach depth texture as FBO's depth buffer
-    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO2);
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap2, 0);
-    glDrawBuffer(GL_NONE);
-    glReadBuffer(GL_NONE);
-    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    for(int i = 0; i < LIGHT_NUMBR; i++){
+        vector<unsigned int> bufferAndMap = createShadowBuffer();
+        depthMapFBO[i] = bufferAndMap[0];
+        depthMap[i] = bufferAndMap[1];
+
+    }
 
 
     // For frame time
@@ -255,7 +229,7 @@ int main(int argc, char *argv[])
         updateGameLogic(newCube, cubeRad, cubeRot, cubeY, millis, baseTime, reset);
 
         //update lighting parameters
-        const int LIGHT_NUMBR = 5;
+        
         vec3* lightPos = setLights(LIGHT_NUMBR, texturedShaderProgram, textureShader, millis, lightingShaderProgram);
 
         // set cameraPosition
@@ -263,50 +237,36 @@ int main(int argc, char *argv[])
 
         //render the Shadow map !!
         glCullFace(GL_FRONT);
+        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 
         glm::mat4 lightProjection, lightView;
-        glm::mat4 lightSpaceMatrix[2];
+        glm::mat4 lightSpaceMatrix[LIGHT_NUMBR];
         float near_plane = 1.0f, far_plane = 300.0f;
-        //float fov = glm::radians(160.0f); // or another suitable value
-        //float aspect = 1.0f; // shadow map is usually square
-        //lightProjection = glm::perspective(fov, aspect, near_plane, far_plane);
-        lightProjection = glm::ortho(-100.f, 100.f, -100.f, 100.f, near_plane, far_plane);
-        lightView = glm::lookAt(lightPos[0], glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(0.0, 1.0, 0.0));
-        lightSpaceMatrix[0] = lightProjection * lightView;
 
-        glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
-        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
-        glClear(GL_DEPTH_BUFFER_BIT);
-        // 2. Use shadow shader
-        shadowShader.use();
-        // Set lightSpaceMatrix uniform (projection * view from light's POV)
-        shadowShader.setMat4("lightSpaceMatrix", lightSpaceMatrix[0]);
-                // Render scene with shadow shader
-        renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,
-            metalTextureID, shadowShaderProgram, vao, baseRotation, bicepAngle,
-            forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot,
-            sphereVAO, sphereVertices, cylinderVAO, cylinderVertices, cubeVertices);
-
-        lightProjection = glm::ortho(-100.f, 100.f, -100.f, 100.f, near_plane, far_plane);
-        lightView = glm::lookAt(lightPos[1], glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(0.0, 1.0, 0.0));
-        lightSpaceMatrix[1] = lightProjection * lightView;
+ 
 
 
-
-        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO2);
-        glClear(GL_DEPTH_BUFFER_BIT);
-        // 2. Use shadow shader
-        shadowShader.use();
-        // Set lightSpaceMatrix uniform (projection * view from light's POV)
-        shadowShader.setMat4("lightSpaceMatrix", lightSpaceMatrix[1]);
-                // Render scene with shadow shader
-        renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,
-            metalTextureID, shadowShaderProgram, vao, baseRotation, bicepAngle,
-            forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot,
-            sphereVAO, sphereVertices, cylinderVAO, cylinderVertices, cubeVertices);
+        // for every light source, create the shadow map
+        for(int i  = 0; i < LIGHT_NUMBR; i++){
 
 
+            lightProjection = glm::ortho(-100.f, 100.f, -100.f, 100.f, near_plane, far_plane);
+            lightView = glm::lookAt(lightPos[i], glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(0.0, 1.0, 0.0));
+            lightSpaceMatrix[i] = lightProjection * lightView;
 
+            glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO[i]);
+            glClear(GL_DEPTH_BUFFER_BIT);
+            // 2. Use shadow shader
+            shadowShader.use();
+            // Set lightSpaceMatrix uniform (projection * view from light's POV)
+            shadowShader.setMat4("lightSpaceMatrix", lightSpaceMatrix[i]);
+                    // Render scene with shadow shader
+            renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,
+                metalTextureID, shadowShaderProgram, vao, baseRotation, bicepAngle,
+                forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot,
+                sphereVAO, sphereVertices, cylinderVAO, cylinderVertices, cubeVertices);
+
+        }
 
 
 
@@ -335,7 +295,7 @@ int main(int argc, char *argv[])
         setProjectionMatrix(texturedShaderProgram, projectionMatrix);
         setProjectionMatrix(lightingShaderProgram, projectionMatrix);
 
-        // 1. Set viewport to window size
+        //  Set viewport to window size
         int fbWidth, fbHeight;
         glfwGetFramebufferSize(window, &fbWidth, &fbHeight);
         glViewport(0, 0, fbWidth, fbHeight);
@@ -347,16 +307,19 @@ int main(int argc, char *argv[])
         // draw the lights
         drawLights(LIGHT_NUMBR, lightingShaderProgram, sphereVAO, sphereVertices, lightPos, texturedShaderProgram, textureShader);
 
-        // 2. Use main shader
+        //  Use main shader
         textureShader.use();
-        textureShader.setMat4("lightSpaceMatrix[0]", lightSpaceMatrix[0]);
-        textureShader.setMat4("lightSpaceMatrix[1]", lightSpaceMatrix[1]);
-        glActiveTexture(GL_TEXTURE1);
-        glBindTexture(GL_TEXTURE_2D, depthMap);
-        glActiveTexture(GL_TEXTURE2);
-        glBindTexture(GL_TEXTURE_2D, depthMap2);
-        textureShader.setInt("shadowMap[0]", 1);
-        textureShader.setInt("shadowMap[1]", 2);
+
+        // set the shadow textures for the main rendering
+        for(int i = 0; i < LIGHT_NUMBR; i++){
+            textureShader.setMat4("lightSpaceMatrix[" + to_string(i) + "]", lightSpaceMatrix[i]);
+            glActiveTexture(GL_TEXTURE1 + i);
+            glBindTexture(GL_TEXTURE_2D, depthMap[i]);
+            textureShader.setInt("shadowMap[" + to_string(i) + "]", i+1);
+
+        }
+
+        
 
         // Render scene
         renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,
@@ -456,3 +419,30 @@ GLuint setupModelVBO(string path, int& vertexCount) {
   return VAO;
 }
 
+vector<unsigned int> createShadowBuffer(){
+    
+    const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+    unsigned int depthMapFBO;
+    glGenFramebuffers(1, &depthMapFBO);
+    // create depth texture
+    unsigned int depthMap;
+    glGenTextures(1, &depthMap);
+    glBindTexture(GL_TEXTURE_2D, depthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    float borderColor[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    // attach depth texture as FBO's depth buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+    vector<unsigned int> bufferAndMap = {depthMapFBO, depthMap};
+    return bufferAndMap;
+
+}

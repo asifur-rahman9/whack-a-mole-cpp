@@ -12,8 +12,8 @@ uniform float specularStrength = 0.5;
 uniform float ambientStrength = 0.1;
 uniform int lightNo = 5;
 
-uniform sampler2D[2] shadowMap;
-uniform mat4[2] lightSpaceMatrix;
+uniform sampler2D[5] shadowMap;
+uniform mat4[5] lightSpaceMatrix;
 
 out vec4 FragColor;
 
@@ -52,18 +52,25 @@ void main()
     diffuse = diffuse / 8.f;
     specular = specular / 10.f;
 
-    vec3 shadDir = normalize(lightPos[0] - FragPos);
-    vec4 fragPosLightSpace = lightSpaceMatrix[0] * vec4(FragPos, 1.0);
-    float shadow = ShadowCalculation(fragPosLightSpace, shadDir, norm, 0);
+    vec3[5] shadDir;
+    float[5] shadow;
+    float shadowAvg = 0;
 
-    vec3 shadDir2 = normalize(lightPos[1] - FragPos);
-    vec4 fragPosLightSpace2 = lightSpaceMatrix[1] * vec4(FragPos, 1.0);
-    float shadow2 = ShadowCalculation(fragPosLightSpace2, shadDir2, norm, 1);
+
+    for(int i = 0; i < 5; i++){
+        shadDir[i] = normalize(lightPos[i] - FragPos);
+        vec4 fragPosLightSpace = lightSpaceMatrix[i] * vec4(FragPos, 1.0);
+        shadow[i] = ShadowCalculation(fragPosLightSpace, shadDir[i], norm, i);
+        shadowAvg += shadow[i];
+
+    }
     
+    shadowAvg /= 3;
     
 
     vec4 textureColor = texture(textureSampler, vertexUV);
-    vec3 lighting = ambient + (1.0 - (shadow/2) - (shadow2/2)) * (diffuse + specular);
+    
+    vec3 lighting = ambient + (1.0 - shadowAvg) * (diffuse + specular);
     vec4 result = vec4(lighting, 1.0);
     FragColor = result * textureColor;
     FragColor = result * textureColor;
