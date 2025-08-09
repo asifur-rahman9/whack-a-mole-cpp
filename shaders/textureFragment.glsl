@@ -12,12 +12,12 @@ uniform float specularStrength = 0.5;
 uniform float ambientStrength = 0.1;
 uniform int lightNo = 5;
 
-uniform sampler2D shadowMap;
-uniform mat4 lightSpaceMatrix;
+uniform sampler2D[2] shadowMap;
+uniform mat4[2] lightSpaceMatrix;
 
 out vec4 FragColor;
 
-float ShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, vec3 norm);
+float ShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, vec3 norm, int lightNo);
 
 
 void main()
@@ -28,7 +28,6 @@ void main()
     // diffuse 
     vec3 diffuse = vec3(0.0f);
     vec3 specular = vec3(0.0f);
-    vec3 shadDir = normalize(lightPos[0] - FragPos);
     vec3 norm = normalize(Normal);
 
     for(int i = 0; i < lightNo; i++){
@@ -53,26 +52,31 @@ void main()
     diffuse = diffuse / 8.f;
     specular = specular / 10.f;
 
-    vec4 fragPosLightSpace = lightSpaceMatrix * vec4(FragPos, 1.0);
-    float shadow = ShadowCalculation(fragPosLightSpace, shadDir, norm);
+    vec3 shadDir = normalize(lightPos[0] - FragPos);
+    vec4 fragPosLightSpace = lightSpaceMatrix[0] * vec4(FragPos, 1.0);
+    float shadow = ShadowCalculation(fragPosLightSpace, shadDir, norm, 0);
+
+    vec3 shadDir2 = normalize(lightPos[1] - FragPos);
+    vec4 fragPosLightSpace2 = lightSpaceMatrix[1] * vec4(FragPos, 1.0);
+    float shadow2 = ShadowCalculation(fragPosLightSpace2, shadDir2, norm, 1);
     
     
 
     vec4 textureColor = texture(textureSampler, vertexUV);
-    vec3 lighting = ambient + (1.0 - shadow) * (diffuse + specular);
+    vec3 lighting = ambient + (1.0 - (shadow/2) - (shadow2/2)) * (diffuse + specular);
     vec4 result = vec4(lighting, 1.0);
     FragColor = result * textureColor;
     FragColor = result * textureColor;
 }
 
-float ShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, vec3 norm)
+float ShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, vec3 norm, int lightNo)
 {
     // Perform perspective divide
     vec3 projCoords = fragPosLightSpace.xyz / fragPosLightSpace.w;
     // Transform to [0,1] range
     projCoords = projCoords * 0.5 + 0.5;
     // Get closest depth value from light's perspective
-    float closestDepth = texture(shadowMap, projCoords.xy).r;
+    float closestDepth = texture(shadowMap[lightNo], projCoords.xy).r;
     // Current fragment depth from light's perspective
     float currentDepth = projCoords.z;
     // Shadow if current depth > closest depth

@@ -179,9 +179,28 @@ int main(int argc, char *argv[])
     glReadBuffer(GL_NONE);
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
+    unsigned int depthMapFBO2;
+    glGenFramebuffers(1, &depthMapFBO2);
+    unsigned int depthMap2;
+    glGenTextures(1, &depthMap2);
+    glBindTexture(GL_TEXTURE_2D, depthMap2);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+    
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    // attach depth texture as FBO's depth buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO2);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthMap2, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
+
+
     // For frame time
     float lastFrameTime = glfwGetTime();
-
     // Other OpenGL states to set once
     // Enable Backface culling
     glEnable(GL_CULL_FACE);
@@ -225,10 +244,7 @@ int main(int argc, char *argv[])
         // Each frame, reset color of each pixel to glClearColor
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        // render the skybox first
-        //renderSkybox(camera, skyboxShaderProgram, skyboxShader, projectionMatrix, skyboxVAO, cubemapTexture);
-
-
+        
         // keeping track of time for adjustment with time purposes
         now = std::chrono::system_clock::now();
         duration = now.time_since_epoch();
@@ -249,14 +265,14 @@ int main(int argc, char *argv[])
         glCullFace(GL_FRONT);
 
         glm::mat4 lightProjection, lightView;
-        glm::mat4 lightSpaceMatrix;
+        glm::mat4 lightSpaceMatrix[2];
         float near_plane = 1.0f, far_plane = 300.0f;
         //float fov = glm::radians(160.0f); // or another suitable value
         //float aspect = 1.0f; // shadow map is usually square
         //lightProjection = glm::perspective(fov, aspect, near_plane, far_plane);
         lightProjection = glm::ortho(-100.f, 100.f, -100.f, 100.f, near_plane, far_plane);
         lightView = glm::lookAt(lightPos[0], glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(0.0, 1.0, 0.0));
-        lightSpaceMatrix = lightProjection * lightView;
+        lightSpaceMatrix[0] = lightProjection * lightView;
 
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
         glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO);
@@ -264,7 +280,25 @@ int main(int argc, char *argv[])
         // 2. Use shadow shader
         shadowShader.use();
         // Set lightSpaceMatrix uniform (projection * view from light's POV)
-        shadowShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        shadowShader.setMat4("lightSpaceMatrix", lightSpaceMatrix[0]);
+                // Render scene with shadow shader
+        renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,
+            metalTextureID, shadowShaderProgram, vao, baseRotation, bicepAngle,
+            forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot,
+            sphereVAO, sphereVertices, cylinderVAO, cylinderVertices, cubeVertices);
+
+        lightProjection = glm::ortho(-100.f, 100.f, -100.f, 100.f, near_plane, far_plane);
+        lightView = glm::lookAt(lightPos[1], glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(0.0, 1.0, 0.0));
+        lightSpaceMatrix[1] = lightProjection * lightView;
+
+
+
+        glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO2);
+        glClear(GL_DEPTH_BUFFER_BIT);
+        // 2. Use shadow shader
+        shadowShader.use();
+        // Set lightSpaceMatrix uniform (projection * view from light's POV)
+        shadowShader.setMat4("lightSpaceMatrix", lightSpaceMatrix[1]);
                 // Render scene with shadow shader
         renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,
             metalTextureID, shadowShaderProgram, vao, baseRotation, bicepAngle,
@@ -315,10 +349,14 @@ int main(int argc, char *argv[])
 
         // 2. Use main shader
         textureShader.use();
-        textureShader.setMat4("lightSpaceMatrix", lightSpaceMatrix);
+        textureShader.setMat4("lightSpaceMatrix[0]", lightSpaceMatrix[0]);
+        textureShader.setMat4("lightSpaceMatrix[1]", lightSpaceMatrix[1]);
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, depthMap);
-        textureShader.setInt("shadowMap", 1);
+        glActiveTexture(GL_TEXTURE2);
+        glBindTexture(GL_TEXTURE_2D, depthMap2);
+        textureShader.setInt("shadowMap[0]", 1);
+        textureShader.setInt("shadowMap[1]", 2);
 
         // Render scene
         renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,
