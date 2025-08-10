@@ -11,13 +11,13 @@ void handleRobotArmInput(GLFWwindow *window, float &bicepAngle, float &forearmAn
 {
     if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) // move robot bicep to the left
     {
-        if (bicepAngle > -30.0)
+        if (bicepAngle > -45.0)
             bicepAngle = bicepAngle - ARM_ROTATION_SPEED;
     }
 
     if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) // move robot bicep to the right
     {
-        if (bicepAngle < 30.0)
+        if (bicepAngle < 45.0)
             bicepAngle = bicepAngle + ARM_ROTATION_SPEED;
     }
 

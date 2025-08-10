@@ -38,15 +38,15 @@ void renderArmComponents(GLuint cementTopTextureID, GLuint cementBaseTextureID,
     glBindTexture(GL_TEXTURE_2D, cementTopTextureID);
     mat4 baseMatrix = translate(mat4(1.0f), vec3(5.0f, 1.f, 5.0f)) *
                       rotate(mat4(1.0f), radians(baseRotation + 180.0f), vec3(0.0f, 1.0f, 0.0f)) *
-                      scale(mat4(1.0f), vec3(0.45f, 0.4f, 0.45f));
+                      scale(mat4(1.0f), vec3(0.55f, 0.5f, 0.55f));
     setWorldMatrix(texturedShaderProgram, baseMatrix);
     glDrawArrays(GL_TRIANGLES, 0, sphereVertices);
 
     // Larger fixed base (cube)
      glBindVertexArray(cubeVAO);
     glBindTexture(GL_TEXTURE_2D, cementBaseTextureID);
-    mat4 bigBaseMatrix = translate(mat4(1.0f), vec3(5.0f, 1.f, 5.0f)) *
-                         scale(mat4(1.0f), vec3(6.1f, 1.6f, 6.1f));
+    mat4 bigBaseMatrix = translate(mat4(1.0f), vec3(5.0f, 0.55f, 5.0f)) *
+                         scale(mat4(1.0f), vec3(7.1f, 1.3f, 7.1f));
     setWorldMatrix(texturedShaderProgram, bigBaseMatrix);
     glDrawArrays(GL_TRIANGLES, 0, cubeVertices);
 

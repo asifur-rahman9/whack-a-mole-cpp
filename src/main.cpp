@@ -331,14 +331,42 @@ int main(int argc, char *argv[])
         vec3 hammerWorldPos = calculateHammerPosition(baseRotation, bicepAngle, forearmAngle, bicepLength, forearmLength);
         vec3 cubePosition = vec3(cubeX + (cubeRad * sin(cubeRot)), cubeY, cubeRad * cos(cubeRot));
 
+        //check hammer hits cube
         if (checkCollision(hammerWorldPos, cubePosition, baseRotation))
         {
+            cout << "Hammer Hit! Oh no!" << endl;
+            newCube = true;
+            baseTime = millis;
+            points = points - 1;
+            cout << "Current score: " << points << " points!" << endl;
+        }
+
+        //check player hits cube
+        if(checkCatch(camera.getPosition(), camera.getLookAt(), cubePosition)){
             cout << "Hit!" << endl;
             newCube = true;
             baseTime = millis;
             points = points + 1;
             cout << "Current score: " << points << " points!" << endl;
+
+            // initiate swiping motion
+
         }
+
+        //check hammer hits player
+        if(checkCatch(camera.getPosition(), camera.getLookAt(), hammerWorldPos)){
+            cout << "Hit!" << endl;
+            newCube = true;
+            baseTime = millis;
+            points = points - 1;
+            camera.knockBack();
+            cout << "Current score: " << points << " points!" << endl;
+
+            
+
+        }
+
+        
 
 
 

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <glm/glm.hpp>
+#include "constants.hpp"
 
 // Forward declaration to avoid including GLFW in header
 struct GLFWwindow;
@@ -27,15 +28,23 @@ private:
     double lastMousePosX;
     double lastMousePosY;
 
+    bool jump;
+    vec3 velocity;
+    vec3 gravity;
+    float jumpSpeed;
+    bool knockedBack;
+
+
 public:
     // Constructor
-    Camera(vec3 initialPosition = vec3(-35.0f, 20.0f, -35.0f),
+    Camera(vec3 initialPosition = vec3(-35.0f, PLAYER_HEIGHT, -35.0f),
            vec3 initialLookAt = vec3(1.0f, -0.3f, 1.0f),
            vec3 initialUp = vec3(0.0f, 1.0f, 0.0f));
 
     // Camera control methods
     void handleInput(GLFWwindow *window, float deltaTime);
     void updateViewMatrix(int shaderProgram);
+    void knockBack();
 
     // Getters
     vec3 getPosition() const { return position; }

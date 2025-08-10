@@ -3,7 +3,7 @@
 // Window and camera constants
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
-const float CAMERA_SPEED = 5.0f;
+const float CAMERA_SPEED = 8.0f;
 const float CAMERA_FAST_SPEED_MULTIPLIER = 2.0f;
 const float CAMERA_ANGULAR_SPEED = 6.0f;
 const float FIELD_OF_VIEW = 70.0f;
@@ -23,3 +23,5 @@ const int MIN_CUBE_RADIUS = 16;
 const int MAX_CUBE_RADIUS = 18;
 const int MIN_CUBE_HEIGHT = 7;
 const int MAX_CUBE_HEIGHT = 11;
+
+const float PLAYER_HEIGHT = 4.0F;

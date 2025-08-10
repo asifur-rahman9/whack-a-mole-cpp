@@ -20,6 +20,8 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
 
 bool checkCollision(vec3 hammerWorldPos, vec3 cubePosition, float baseRotation);
 
+bool checkCatch(vec3 cameraWorld, vec3 lookAt, vec3 cubePosition);
+
 void renderLights(int lightVAO, int lightShadingProgram, int sphereVertices, vec3 lightPos);
 
 vec3* setLights(int LIGHT_NUMBR, int texturedShaderProgram, Shader textureShader, unsigned long millis, int lightingShaderProgram);

@@ -22,6 +22,11 @@ Camera::Camera(vec3 initialPosition, vec3 initialLookAt, vec3 initialUp)
     // Initialize mouse position
     lastMousePosX = 0.0;
     lastMousePosY = 0.0;
+    // Initialize gravity and velocity
+    velocity = {0.0f, 0.0f, 0.0f};
+    gravity = {0.0f, -10.0f, 0.0f};
+    jumpSpeed = 10.0f;
+
 }
 
 // Handle all camera input including movement and look around
@@ -64,11 +69,12 @@ void Camera::handleInput(GLFWwindow *window, float deltaTime)
     sideVector = normalize(sideVector);
 
     // WASD movement
+    if(knockedBack == false){
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        position += lookAt * currentSpeed * deltaTime;
+        position += vec3(lookAt.x, 0.0f, lookAt.z) * currentSpeed * deltaTime;
 
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        position -= lookAt * currentSpeed * deltaTime;
+        position -= vec3(lookAt.x, 0.0f, lookAt.z) * currentSpeed * deltaTime;
 
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         position -= sideVector * currentSpeed * deltaTime;
@@ -76,11 +82,60 @@ void Camera::handleInput(GLFWwindow *window, float deltaTime)
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         position += sideVector * currentSpeed * deltaTime;
 
-    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        position += up * currentSpeed * deltaTime;
+    }
 
-    if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
-        position -= up * currentSpeed * deltaTime;
+    //if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        //position += up * currentSpeed * deltaTime;
+
+    //if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
+        //position -= up * currentSpeed * deltaTime;
+
+
+    if(position.y > PLAYER_HEIGHT){
+        //they've jumped
+        velocity = velocity + gravity * deltaTime;
+        
+
+    } else if(position.y <= PLAYER_HEIGHT){
+        //they're on the ground
+        velocity.y = 0;
+        position.y = PLAYER_HEIGHT;
+    }
+    
+    if ((glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) && position.y == PLAYER_HEIGHT)
+    {
+        velocity.y =  velocity.y + jumpSpeed;
+        
+    }
+
+    position = position + velocity * deltaTime;
+    velocity.x = 0.985 * velocity.x;
+    velocity.z = 0.985 * velocity.z;
+
+    if(knockedBack == true){
+        if(velocity.x < 0.1 && velocity.y < 0.1){
+            knockedBack = false;
+        }
+    }
+
+    
+
+
+}
+
+void Camera::knockBack(){
+    if(knockedBack == false){
+        vec3 knockbackDirection = position - vec3(5.0f, 0.0f, 5.0f);
+        knockbackDirection = normalize(knockbackDirection);
+        vec3 knockbackVelocity = vec3(knockbackDirection.x,  0.1 * knockbackDirection.y, knockbackDirection.z);
+        knockbackVelocity = normalize(knockbackVelocity);
+        knockbackVelocity *= 50;
+        velocity = velocity + knockbackVelocity;
+
+    }
+    
+    knockedBack = true;
+
 }
 
 // Update view matrix for both shader programs

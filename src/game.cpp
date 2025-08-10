@@ -196,3 +196,20 @@ bool checkCollision(vec3 hammerWorldPos, vec3 cubePosition, float baseRotation)
 
     return (distanceX < (4.0f * sin(baseRotation) + 1) && distanceY < 4.0f && distanceZ < (4.0f * cos(baseRotation) + 1));
 }
+
+bool checkCatch(vec3 cameraWorld, vec3 lookAt, vec3 cubePosition){
+    vec3 viewPoint = cameraWorld - lookAt;
+
+    float distanceX = abs(viewPoint.x - cubePosition.x);
+    float distanceY = abs(viewPoint.y - cubePosition.y);
+    float distanceZ = abs(viewPoint.z - cubePosition.z);
+
+    bool xGood = distanceX < 4;
+    bool yGood = distanceY < 4;
+    bool zGood = distanceZ < 4;
+    
+
+    return xGood & yGood & zGood;
+
+    
+}
