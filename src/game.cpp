@@ -48,7 +48,7 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
                  int cubeVertices,
                  GLuint grass1VAO, int grass1Vertices,
                  GLuint grass2VAO, int grass2Vertices,
-                 GLuint treeVAO, int treeVertices)
+                 GLuint treeVAO, int treeVertices, bool isShadow)
 {
     // Enable our texture shader program, set the texture location, bind the texture
 
@@ -81,11 +81,16 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
     setWorldMatrix(texturedShaderProgram, cubeMatrix);
     glDrawArrays(GL_TRIANGLES, 0, cubeVertices);
 
-    // Render grass
-    renderGrass(grassTextureID, texturedShaderProgram, grass1VAO, grass1Vertices, grass2VAO, grass2Vertices);
+    if(!isShadow){
+        // Render grass
+        renderGrass(grassTextureID, texturedShaderProgram, grass1VAO, grass1Vertices, grass2VAO, grass2Vertices);
+
+
+    }
 
     // Render trees
     renderTrees(grassTextureID, texturedShaderProgram, treeVAO, treeVertices);
+    
 
     glUniform1f(glGetUniformLocation(texturedShaderProgram, "ambientStrength"), 0.1f);
 
@@ -238,20 +243,24 @@ void renderGrass(GLuint grassTextureID, int texturedShaderProgram,
 
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, grassTextureID);
+    const int RANGE = 160;
 
-    for (int x = 0; x < 80; x++) {
-        for (int z = 0; z < 80; z++) {
+    for (int x = 0; x < RANGE; x++) {
+        for (int z = 0; z < RANGE; z++) {
 
             // Skip some randomly
             if ((x * 37 + z * 23) % 5 == 0) continue;
 
-            float posX = (x - 40) * 1.5f + ((x * 17 + z * 13) % 20 - 10) * 0.1f;
-            float posZ = (z - 40) * 1.5f + ((x * 13 + z * 17) % 20 - 10) * 0.1f;
+            
+
+            float posX = (x - RANGE/2) * 1.0f + ((x * 17 + z * 13) % 20 - 10) * 0.3f + 2*sin(x) + 2*cos(z);
+            float posZ = (z - RANGE/2) * 1.0f + ((x * 13 + z * 17) % 20 - 10) * 0.3f + 2*sin(z) + 2*cos(x);
 
             // Skip arm area
             if ((posX - 5) * (posX - 5) + (posZ - 5) * (posZ - 5) < 36) continue;
 
             // choice of grass type based on position
+            glUniform1f(glGetUniformLocation(texturedShaderProgram, "alpha"), 0.6f);
             if (x % 3 == 0) {
                 glBindVertexArray(grass2VAO);
                 setWorldMatrix(texturedShaderProgram, translate(mat4(1.0f), vec3(posX, 0.0f, posZ)));
@@ -263,6 +272,7 @@ void renderGrass(GLuint grassTextureID, int texturedShaderProgram,
             }
         }
     }
+    glUniform1f(glGetUniformLocation(texturedShaderProgram, "alpha"), 1.0f);
 }
 
 void renderTrees(GLuint grassTextureID, int texturedShaderProgram, GLuint treeVAO, int treeVertices)

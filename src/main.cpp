@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     GLuint metalTextureID = loadTexture("textures/metal.png");
 
     // Sky blue background for sky
-    glClearColor(0.23f, 0.21f, 0.62f, 1.0f);
+    glClearColor(0.13f, 0.11f, 0.32f, 1.0f);
 
     //enabling blending
     glEnable(GL_BLEND);
@@ -281,7 +281,7 @@ int main(int argc, char *argv[])
                 metalTextureID, shadowShaderProgram, vao, baseRotation, bicepAngle,
                 forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot,
                 sphereVAO, sphereVertices, cylinderVAO, cylinderVertices, cubeVertices,
-                grass1VAO, grass1Vertices, grass2VAO, grass2Vertices, treeVAO, treeVertices);
+                grass1VAO, grass1Vertices, grass2VAO, grass2Vertices, treeVAO, treeVertices, true);
 
         }
 
@@ -343,7 +343,7 @@ int main(int argc, char *argv[])
             metalTextureID, texturedShaderProgram, vao, baseRotation, bicepAngle,
             forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot,
             sphereVAO, sphereVertices, cylinderVAO, cylinderVertices, cubeVertices,
-            grass1VAO, grass1Vertices, grass2VAO, grass2Vertices, treeVAO, treeVertices);
+            grass1VAO, grass1Vertices, grass2VAO, grass2Vertices, treeVAO, treeVertices, false);
 
         // Check for collision between hammer and cube
         vec3 hammerWorldPos = calculateHammerPosition(baseRotation, bicepAngle, forearmAngle, bicepLength, forearmLength);

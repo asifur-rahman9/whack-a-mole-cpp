@@ -11,6 +11,7 @@ uniform sampler2D textureSampler;
 uniform float specularStrength = 0.5;
 uniform float ambientStrength = 0.1;
 uniform int lightNo = 5;
+uniform float alpha = 1.0;
 
 uniform sampler2D[5] shadowMap;
 uniform mat4[5] lightSpaceMatrix;
@@ -71,7 +72,7 @@ void main()
     vec4 textureColor = texture(textureSampler, vertexUV);
     
     vec3 lighting = ambient + (1.0 - shadowAvg) * (diffuse + specular);
-    vec4 result = vec4(lighting, 1.0);
+    vec4 result = vec4(lighting, alpha);
     FragColor = result * textureColor;
     FragColor = result * textureColor;
 }

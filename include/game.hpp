@@ -19,7 +19,7 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
                  int cubeVertices,
                  GLuint grass1VAO, int grass1Vertices,
                  GLuint grass2VAO, int grass2Vertices,
-                 GLuint treeVAO, int treeVertices);
+                 GLuint treeVAO, int treeVertices, bool isShadow);
 
 bool checkCatch(vec3 cameraWorld, vec3 lookAt, vec3 cubePosition);
 

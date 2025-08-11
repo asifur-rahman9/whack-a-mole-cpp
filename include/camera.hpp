@@ -30,6 +30,7 @@ private:
 
     bool jump;
     vec3 velocity;
+    float keyVelocity;
     vec3 gravity;
     float jumpSpeed;
     bool knockedBack;

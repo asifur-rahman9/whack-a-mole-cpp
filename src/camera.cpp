@@ -26,6 +26,7 @@ Camera::Camera(vec3 initialPosition, vec3 initialLookAt, vec3 initialUp)
     velocity = {0.0f, 0.0f, 0.0f};
     gravity = {0.0f, -10.0f, 0.0f};
     jumpSpeed = 10.0f;
+    jump = false;
 
 }
 
@@ -70,12 +71,19 @@ void Camera::handleInput(GLFWwindow *window, float deltaTime)
 
     // WASD movement
     if(knockedBack == false){
-    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        position += vec3(lookAt.x, 0.0f, lookAt.z) * currentSpeed * deltaTime;
+        if(jump == false){
+            if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+                {position += vec3(lookAt.x, 0.0f, lookAt.z) * currentSpeed * deltaTime;
+                keyVelocity = currentSpeed;
+                velocity = vec3(0.0f);}
 
-    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        position -= vec3(lookAt.x, 0.0f, lookAt.z) * currentSpeed * deltaTime;
-
+            else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+                {position -= vec3(lookAt.x, 0.0f, lookAt.z) * currentSpeed * deltaTime;
+                keyVelocity = -currentSpeed;
+                velocity = vec3(0.0f);}
+            else
+                {keyVelocity = 0;}
+        }
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         position -= sideVector * currentSpeed * deltaTime;
 
@@ -94,23 +102,31 @@ void Camera::handleInput(GLFWwindow *window, float deltaTime)
     if(position.y > PLAYER_HEIGHT){
         //they've jumped
         velocity = velocity + gravity * deltaTime;
+        //float horSpeed = sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
+        //velocity.x = lookAt.x * horSpeed;
+        //velocity.z = lookAt.z * horSpeed;
 
 
     } else if(position.y <= PLAYER_HEIGHT){
         //they're on the ground
-        velocity.y = 0;
+        if(jump == true)
+            velocity = vec3(0.0f);
+        velocity.y = 0.0f;
         position.y = PLAYER_HEIGHT;
+        jump = false;
     }
 
     if ((glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) && position.y == PLAYER_HEIGHT)
     {
         velocity.y =  velocity.y + jumpSpeed;
+        velocity = velocity + (vec3(lookAt.x, 0.0f, lookAt.z) * keyVelocity);
+        jump = true;
 
     }
 
-    position = position + velocity * deltaTime;
-    velocity.x = 0.985 * velocity.x;
-    velocity.z = 0.985 * velocity.z;
+    position = position + (velocity * deltaTime);
+    velocity.x = 0.98 * velocity.x;
+    velocity.z = 0.98 * velocity.z;
 
     if(knockedBack == true){
         if(length(velocity) < 3.0f){
@@ -127,7 +143,8 @@ void Camera::knockBack(vec3 hammerPosition){
         knockbackVelocity = normalize(knockbackVelocity);
         knockbackVelocity *= 25.0f;
 
-        velocity = velocity + knockbackVelocity;
+        velocity = knockbackVelocity;
+        jump = false;
     }
 
     knockedBack = true;
