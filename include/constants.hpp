@@ -3,9 +3,9 @@
 // Window and camera constants
 const int WINDOW_WIDTH = 800;
 const int WINDOW_HEIGHT = 600;
-const float CAMERA_SPEED = 8.0f;
+const float CAMERA_SPEED = 25.0f;
 const float CAMERA_FAST_SPEED_MULTIPLIER = 2.0f;
-const float CAMERA_ANGULAR_SPEED = 6.0f;
+const float CAMERA_ANGULAR_SPEED = 10.0f;
 const float FIELD_OF_VIEW = 70.0f;
 const float NEAR_PLANE = 0.01f;
 const float FAR_PLANE = 300.0f;

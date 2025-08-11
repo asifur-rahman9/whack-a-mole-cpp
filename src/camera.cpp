@@ -94,18 +94,18 @@ void Camera::handleInput(GLFWwindow *window, float deltaTime)
     if(position.y > PLAYER_HEIGHT){
         //they've jumped
         velocity = velocity + gravity * deltaTime;
-        
+
 
     } else if(position.y <= PLAYER_HEIGHT){
         //they're on the ground
         velocity.y = 0;
         position.y = PLAYER_HEIGHT;
     }
-    
+
     if ((glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) && position.y == PLAYER_HEIGHT)
     {
         velocity.y =  velocity.y + jumpSpeed;
-        
+
     }
 
     position = position + velocity * deltaTime;
@@ -113,29 +113,24 @@ void Camera::handleInput(GLFWwindow *window, float deltaTime)
     velocity.z = 0.985 * velocity.z;
 
     if(knockedBack == true){
-        if(velocity.x < 0.1 && velocity.y < 0.1){
+        if(length(velocity) < 3.0f){
             knockedBack = false;
         }
     }
 
-    
-
-
 }
 
-void Camera::knockBack(){
+void Camera::knockBack(vec3 hammerPosition){
     if(knockedBack == false){
-        vec3 knockbackDirection = position - vec3(5.0f, 0.0f, 5.0f);
-        knockbackDirection = normalize(knockbackDirection);
-        vec3 knockbackVelocity = vec3(knockbackDirection.x,  0.1 * knockbackDirection.y, knockbackDirection.z);
+        vec3 knockbackDirection = normalize(position - hammerPosition);
+        vec3 knockbackVelocity = vec3(knockbackDirection.x, 0.01f * knockbackDirection.y, knockbackDirection.z);
         knockbackVelocity = normalize(knockbackVelocity);
-        knockbackVelocity *= 50;
+        knockbackVelocity *= 25.0f;
+
         velocity = velocity + knockbackVelocity;
-
     }
-    
-    knockedBack = true;
 
+    knockedBack = true;
 }
 
 // Update view matrix for both shader programs
@@ -143,7 +138,7 @@ void Camera::updateViewMatrix(int shaderProgram)
 {
     mat4 viewMatrix = getViewMatrix();
     setViewMatrix(shaderProgram, viewMatrix);
-    
+
 }
 
 // Get the current view matrix

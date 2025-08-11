@@ -44,13 +44,14 @@ public:
     // Camera control methods
     void handleInput(GLFWwindow *window, float deltaTime);
     void updateViewMatrix(int shaderProgram);
-    void knockBack();
+    void knockBack(vec3 hammerPosition);
 
     // Getters
     vec3 getPosition() const { return position; }
     vec3 getLookAt() const { return lookAt; }
     vec3 getUp() const { return up; }
     mat4 getViewMatrix() const;
+    bool isKnockedBack() const { return knockedBack; }
 
     // Setters
     void setSpeed(float newSpeed) { speed = newSpeed; }

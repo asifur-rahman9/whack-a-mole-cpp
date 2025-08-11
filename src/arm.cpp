@@ -2,6 +2,7 @@
 #include "graphics.hpp"
 #include <cmath>
 #include <glm/gtc/matrix_transform.hpp>
+#include <GLFW/glfw3.h>
 
 using namespace std;
 
@@ -107,4 +108,31 @@ void renderArmComponents(GLuint cementTopTextureID, GLuint cementBaseTextureID,
                         scale(mat4(1.0f), vec3(3.0f, 3.0f, 8.0f));
     setWorldMatrix(texturedShaderProgram, hammerMatrix);
     glDrawArrays(GL_TRIANGLES, 0, cubeVertices);
+}
+void updateHammerMovement(HammerController& controller, vec3 cameraPosition,
+                          float& baseRotation, float& bicepAngle, float& forearmAngle,
+                          float deltaTime)
+{
+    vec3 hammerBase = vec3(5.0f, 0.0f, 5.0f);
+    float distance = length(cameraPosition - hammerBase);
+
+    if (distance > controller.detectionRadius) {
+        controller.isActive = false;
+        float speed = 3.0f * deltaTime;
+        baseRotation *= (1.0f - speed);
+        bicepAngle *= (1.0f - speed);
+        forearmAngle *= (1.0f - speed);
+    }
+    else {
+        controller.isActive = true;
+
+        // rotation to face player
+        vec3 toPlayer = normalize(cameraPosition - hammerBase);
+        float targetRotation = degrees(atan2(toPlayer.x, toPlayer.z)) + 180.0f;
+        baseRotation += (targetRotation - baseRotation) * 8.0f * deltaTime;
+
+        float time = glfwGetTime() * 0.3f;
+        bicepAngle = -30.0f + sin(time) * 25.0f;
+        forearmAngle = -35.0f + cos(time) * 50.0f;
+    }
 }

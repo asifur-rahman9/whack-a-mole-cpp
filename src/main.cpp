@@ -113,6 +113,15 @@ int main(int argc, char *argv[])
     int cubeVertices;
     GLuint cubeVAO = setupModelVBO(cubePath, cubeVertices);
 
+    // load the grass models
+    string grass1Path = "models/grass1.obj";
+    int grass1Vertices;
+    GLuint grass1VAO = setupModelVBO(grass1Path, grass1Vertices);
+
+    string grass2Path = "models/grass2.obj";
+    int grass2Vertices;
+    GLuint grass2VAO = setupModelVBO(grass2Path, grass2Vertices);
+
 
     // load the skybox cube
     vector<std::string> faces = {
@@ -183,11 +192,14 @@ int main(int argc, char *argv[])
     glEnable(GL_DEPTH_TEST);
 
     // Parameters to control robotic arm
-    float bicepAngle = 25.0f;  // relative to vertical
+    float bicepAngle = 0.0f;  // relative to vertical
     float forearmAngle = 0.0f; // relative to bicep
     float bicepLength = BICEP_LENGTH;
     float forearmLength = FOREARM_LENGTH;
     float baseRotation = 0.0f; // rotation around Y-axis
+
+    // Hammer automation
+    HammerController hammerController;
 
     // parameters for our target cube
     bool newCube = true;
@@ -218,7 +230,7 @@ int main(int argc, char *argv[])
         // Each frame, reset color of each pixel to glClearColor
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        
+
         // keeping track of time for adjustment with time purposes
         now = std::chrono::system_clock::now();
         duration = now.time_since_epoch();
@@ -229,7 +241,7 @@ int main(int argc, char *argv[])
         updateGameLogic(newCube, cubeRad, cubeRot, cubeY, millis, baseTime, reset);
 
         //update lighting parameters
-        
+
         vec3* lightPos = setLights(LIGHT_NUMBR, texturedShaderProgram, textureShader, millis, lightingShaderProgram);
 
         // set cameraPosition
@@ -243,7 +255,7 @@ int main(int argc, char *argv[])
         glm::mat4 lightSpaceMatrix[LIGHT_NUMBR];
         float near_plane = 1.0f, far_plane = 300.0f;
 
- 
+
 
 
         // for every light source, create the shadow map
@@ -264,7 +276,8 @@ int main(int argc, char *argv[])
             renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,
                 metalTextureID, shadowShaderProgram, vao, baseRotation, bicepAngle,
                 forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot,
-                sphereVAO, sphereVertices, cylinderVAO, cylinderVertices, cubeVertices);
+                sphereVAO, sphereVertices, cylinderVAO, cylinderVertices, cubeVertices,
+                grass1VAO, grass1Vertices, grass2VAO, grass2Vertices);
 
         }
 
@@ -319,25 +332,26 @@ int main(int argc, char *argv[])
 
         }
 
-        
+
 
         // Render scene
         renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,
             metalTextureID, texturedShaderProgram, vao, baseRotation, bicepAngle,
             forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot,
-            sphereVAO, sphereVertices, cylinderVAO, cylinderVertices, cubeVertices);
+            sphereVAO, sphereVertices, cylinderVAO, cylinderVertices, cubeVertices,
+            grass1VAO, grass1Vertices, grass2VAO, grass2Vertices);
 
         // Check for collision between hammer and cube
         vec3 hammerWorldPos = calculateHammerPosition(baseRotation, bicepAngle, forearmAngle, bicepLength, forearmLength);
         vec3 cubePosition = vec3(cubeX + (cubeRad * sin(cubeRot)), cubeY, cubeRad * cos(cubeRot));
 
-        //check hammer hits cube
-        if (checkCollision(hammerWorldPos, cubePosition, baseRotation))
-        {
-            cout << "Hammer Hit! Oh no!" << endl;
+        //check hammer hits player
+        if (checkHammerHitsPlayer(hammerWorldPos, camera.getPosition()) && !camera.isKnockedBack()){
+            cout << "Hammer Hit Player! Oh no!" << endl;
             newCube = true;
             baseTime = millis;
             points = points - 1;
+            camera.knockBack(hammerWorldPos);
             cout << "Current score: " << points << " points!" << endl;
         }
 
@@ -353,21 +367,6 @@ int main(int argc, char *argv[])
 
         }
 
-        //check hammer hits player
-        if(checkCatch(camera.getPosition(), camera.getLookAt(), hammerWorldPos)){
-            cout << "Hit!" << endl;
-            newCube = true;
-            baseTime = millis;
-            points = points - 1;
-            camera.knockBack();
-            cout << "Current score: " << points << " points!" << endl;
-
-            
-
-        }
-
-        
-
 
 
         // End Frame
@@ -381,8 +380,12 @@ int main(int argc, char *argv[])
         // Handle camera input and movement using the camera object
         camera.handleInput(window, dt);
 
-        // Handle robotic arm controls
-        handleRobotArmInput(window, bicepAngle, forearmAngle, baseRotation);
+        //Handle robotic arm controls
+        //handleRobotArmInput(window, bicepAngle, forearmAngle, baseRotation);
+
+        // Update hammer automation
+        updateHammerMovement(hammerController, camera.getPosition(),
+                           baseRotation, bicepAngle, forearmAngle, dt);
 
         // Update view matrix using camera
         camera.updateViewMatrix(texturedShaderProgram);
@@ -434,8 +437,15 @@ GLuint setupModelVBO(string path, int& vertexCount) {
   GLuint uvs_VBO;
   glGenBuffers(1, &uvs_VBO);
   glBindBuffer(GL_ARRAY_BUFFER, uvs_VBO);
-  glBufferData(GL_ARRAY_BUFFER, UVs.size() * sizeof(glm::vec2), &UVs.front(),
-               GL_STATIC_DRAW);
+
+  // UV data fills with zeros if empty
+  std::vector<glm::vec2> uvData = UVs;
+  if (uvData.empty()) {
+    uvData.resize(vertices.size(), glm::vec2(0.0f, 0.0f));
+  }
+
+  glBufferData(GL_ARRAY_BUFFER, uvData.size() * sizeof(glm::vec2), uvData.data(), GL_STATIC_DRAW);
+
   glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat),
                         (GLvoid*)0);
   glEnableVertexAttribArray(2);
@@ -448,7 +458,7 @@ GLuint setupModelVBO(string path, int& vertexCount) {
 }
 
 vector<unsigned int> createShadowBuffer(){
-    
+
     const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
     unsigned int depthMapFBO;
     glGenFramebuffers(1, &depthMapFBO);

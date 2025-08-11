@@ -45,7 +45,9 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
                  float forearmLength, float cubeX, float cubeY, float cubeRad, float cubeRot,
                  GLuint sphereVAO, int sphereVertices,
                  GLuint cylinderVAO, int cylinderVertices,
-                 int cubeVertices)
+                 int cubeVertices,
+                 GLuint grass1VAO, int grass1Vertices,
+                 GLuint grass2VAO, int grass2Vertices)
 {
     // Enable our texture shader program, set the texture location, bind the texture
 
@@ -77,6 +79,9 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
     mat4 cubeMatrix = translate(mat4(1.0f), cubePosition) * scale(mat4(1.0f), vec3(2.0f, 2.0f, 2.0f));
     setWorldMatrix(texturedShaderProgram, cubeMatrix);
     glDrawArrays(GL_TRIANGLES, 0, cubeVertices);
+
+    // Render grass throughout the ground
+    renderGrass(grassTextureID, texturedShaderProgram, grass1VAO, grass1Vertices, grass2VAO, grass2Vertices);
 
     glUniform1f(glGetUniformLocation(texturedShaderProgram, "ambientStrength"), 0.1f);
 
@@ -188,14 +193,14 @@ void renderSkybox(Camera camera, int skyboxShaderProgram, Shader skyboxShader, g
 }
 
 // Check collision between hammer and cube
-bool checkCollision(vec3 hammerWorldPos, vec3 cubePosition, float baseRotation)
-{
-    float distanceX = abs(hammerWorldPos.x - cubePosition.x);
-    float distanceY = abs(hammerWorldPos.y - cubePosition.y);
-    float distanceZ = abs(hammerWorldPos.z - cubePosition.z);
+// bool checkCollision(vec3 hammerWorldPos, vec3 cubePosition, float baseRotation)
+// {
+//     float distanceX = abs(hammerWorldPos.x - cubePosition.x);
+//     float distanceY = abs(hammerWorldPos.y - cubePosition.y);
+//     float distanceZ = abs(hammerWorldPos.z - cubePosition.z);
 
-    return (distanceX < (4.0f * sin(baseRotation) + 1) && distanceY < 4.0f && distanceZ < (4.0f * cos(baseRotation) + 1));
-}
+//     return (distanceX < (4.0f * sin(baseRotation) + 1) && distanceY < 4.0f && distanceZ < (4.0f * cos(baseRotation) + 1));
+// }
 
 bool checkCatch(vec3 cameraWorld, vec3 lookAt, vec3 cubePosition){
     vec3 viewPoint = cameraWorld - lookAt;
@@ -207,9 +212,51 @@ bool checkCatch(vec3 cameraWorld, vec3 lookAt, vec3 cubePosition){
     bool xGood = distanceX < 4;
     bool yGood = distanceY < 4;
     bool zGood = distanceZ < 4;
-    
+
 
     return xGood & yGood & zGood;
 
-    
+
+}
+
+// Check if hammer hits the player
+bool checkHammerHitsPlayer(vec3 hammerWorldPos, vec3 playerPosition){
+    float distance = length(hammerWorldPos - playerPosition);
+    return distance < 5.0f;
+}
+
+
+void renderGrass(GLuint grassTextureID, int texturedShaderProgram,
+                 GLuint grass1VAO, int grass1Vertices,
+                 GLuint grass2VAO, int grass2Vertices)
+{
+    if (grass1VAO == 0) return;
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, grassTextureID);
+
+    for (int x = 0; x < 80; x++) {
+        for (int z = 0; z < 80; z++) {
+
+            // Skip some randomly
+            if ((x * 37 + z * 23) % 5 == 0) continue;
+
+            float posX = (x - 40) * 1.5f + ((x * 17 + z * 13) % 20 - 10) * 0.1f;
+            float posZ = (z - 40) * 1.5f + ((x * 13 + z * 17) % 20 - 10) * 0.1f;
+
+            // Skip arm area
+            if ((posX - 5) * (posX - 5) + (posZ - 5) * (posZ - 5) < 36) continue;
+
+            // choice of grass type based on position
+            if (x % 3 == 0) {
+                glBindVertexArray(grass2VAO);
+                setWorldMatrix(texturedShaderProgram, translate(mat4(1.0f), vec3(posX, 0.0f, posZ)));
+                glDrawArrays(GL_TRIANGLES, 0, grass2Vertices);
+            } else {
+                glBindVertexArray(grass1VAO);
+                setWorldMatrix(texturedShaderProgram, translate(mat4(1.0f), vec3(posX, 0.0f, posZ)));
+                glDrawArrays(GL_TRIANGLES, 0, grass1Vertices);
+            }
+        }
+    }
 }
