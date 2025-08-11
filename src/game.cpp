@@ -47,7 +47,8 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
                  GLuint cylinderVAO, int cylinderVertices,
                  int cubeVertices,
                  GLuint grass1VAO, int grass1Vertices,
-                 GLuint grass2VAO, int grass2Vertices)
+                 GLuint grass2VAO, int grass2Vertices,
+                 GLuint treeVAO, int treeVertices)
 {
     // Enable our texture shader program, set the texture location, bind the texture
 
@@ -80,8 +81,11 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
     setWorldMatrix(texturedShaderProgram, cubeMatrix);
     glDrawArrays(GL_TRIANGLES, 0, cubeVertices);
 
-    // Render grass throughout the ground
+    // Render grass
     renderGrass(grassTextureID, texturedShaderProgram, grass1VAO, grass1Vertices, grass2VAO, grass2Vertices);
+
+    // Render trees
+    renderTrees(grassTextureID, texturedShaderProgram, treeVAO, treeVertices);
 
     glUniform1f(glGetUniformLocation(texturedShaderProgram, "ambientStrength"), 0.1f);
 
@@ -257,6 +261,37 @@ void renderGrass(GLuint grassTextureID, int texturedShaderProgram,
                 setWorldMatrix(texturedShaderProgram, translate(mat4(1.0f), vec3(posX, 0.0f, posZ)));
                 glDrawArrays(GL_TRIANGLES, 0, grass1Vertices);
             }
+        }
+    }
+}
+
+void renderTrees(GLuint grassTextureID, int texturedShaderProgram, GLuint treeVAO, int treeVertices)
+{
+    if (treeVAO == 0) return;
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, grassTextureID);
+    glBindVertexArray(treeVAO);
+
+    for (int x = 0; x < 15; x++) {
+        for (int z = 0; z < 15; z++) {
+
+            // Skip some randomly
+            if ((x * 7 + z * 11) % 13 != 0) continue;
+
+            float posX = (x - 7) * 8.0f + ((x * 23 + z * 17) % 40 - 20) * 0.2f;
+            float posZ = (z - 7) * 8.0f + ((x * 19 + z * 29) % 40 - 20) * 0.2f;
+
+            // Skip arm area
+            if ((posX - 5) * (posX - 5) + (posZ - 5) * (posZ - 5) < 49) continue;
+
+            // Varied sizes
+            float scale = 2.5f + ((x * 13 + z * 7) % 15) * 0.1f;
+
+            mat4 treeMatrix = translate(mat4(1.0f), vec3(posX, 0.0f, posZ)) *
+                             glm::scale(mat4(1.0f), vec3(scale));
+            setWorldMatrix(texturedShaderProgram, treeMatrix);
+            glDrawArrays(GL_TRIANGLES, 0, treeVertices);
         }
     }
 }

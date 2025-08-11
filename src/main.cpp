@@ -122,6 +122,10 @@ int main(int argc, char *argv[])
     int grass2Vertices;
     GLuint grass2VAO = setupModelVBO(grass2Path, grass2Vertices);
 
+    // load the tree model
+    string treePath = "models/tree1.obj";
+    int treeVertices;
+    GLuint treeVAO = setupModelVBO(treePath, treeVertices);
 
     // load the skybox cube
     vector<std::string> faces = {
@@ -277,7 +281,7 @@ int main(int argc, char *argv[])
                 metalTextureID, shadowShaderProgram, vao, baseRotation, bicepAngle,
                 forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot,
                 sphereVAO, sphereVertices, cylinderVAO, cylinderVertices, cubeVertices,
-                grass1VAO, grass1Vertices, grass2VAO, grass2Vertices);
+                grass1VAO, grass1Vertices, grass2VAO, grass2Vertices, treeVAO, treeVertices);
 
         }
 
@@ -339,7 +343,7 @@ int main(int argc, char *argv[])
             metalTextureID, texturedShaderProgram, vao, baseRotation, bicepAngle,
             forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot,
             sphereVAO, sphereVertices, cylinderVAO, cylinderVertices, cubeVertices,
-            grass1VAO, grass1Vertices, grass2VAO, grass2Vertices);
+            grass1VAO, grass1Vertices, grass2VAO, grass2Vertices, treeVAO, treeVertices);
 
         // Check for collision between hammer and cube
         vec3 hammerWorldPos = calculateHammerPosition(baseRotation, bicepAngle, forearmAngle, bicepLength, forearmLength);

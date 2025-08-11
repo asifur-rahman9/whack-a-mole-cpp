@@ -18,7 +18,8 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
                  GLuint cylinderVAO, int cylinderVertices,
                  int cubeVertices,
                  GLuint grass1VAO, int grass1Vertices,
-                 GLuint grass2VAO, int grass2Vertices);
+                 GLuint grass2VAO, int grass2Vertices,
+                 GLuint treeVAO, int treeVertices);
 
 bool checkCatch(vec3 cameraWorld, vec3 lookAt, vec3 cubePosition);
 
@@ -36,3 +37,4 @@ void renderGrass(GLuint grassTextureID, int texturedShaderProgram,
                  GLuint grass1VAO, int grass1Vertices,
                  GLuint grass2VAO, int grass2Vertices);
 
+void renderTrees(GLuint grassTextureID, int texturedShaderProgram, GLuint treeVAO, int treeVertices);
