@@ -109,6 +109,7 @@ void renderArmComponents(GLuint cementTopTextureID, GLuint cementBaseTextureID,
     setWorldMatrix(texturedShaderProgram, hammerMatrix);
     glDrawArrays(GL_TRIANGLES, 0, cubeVertices);
 }
+// updates the framewise position of the hammer to follow the player when in range
 void updateHammerMovement(HammerController& controller, vec3 cameraPosition,
                           float& baseRotation, float& bicepAngle, float& forearmAngle,
                           float deltaTime)

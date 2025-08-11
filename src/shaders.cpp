@@ -11,6 +11,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
     std::ifstream fShaderFile;
     vShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
     fShaderFile.exceptions (std::ifstream::failbit | std::ifstream::badbit);
+    // try to open and read the files specified in the path
     try 
     {
         vShaderFile.open(vertexPath);
@@ -27,31 +28,37 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
     {
         std::cout << "ERROR::SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << std::endl;
     }
+    // make text c parsible
     const char* vShaderCode = vertexCode.c_str();
     const char * fShaderCode = fragmentCode.c_str();
     unsigned int vertex, fragment;
+    // create a vertex shader pointer, compile the code to that object
     vertex = glCreateShader(GL_VERTEX_SHADER);
     glShaderSource(vertex, 1, &vShaderCode, NULL);
     glCompileShader(vertex);
     checkCompileErrors(vertex, "VERTEX");
+    // create a fragment shader pointer, compile the code to that object
     fragment = glCreateShader(GL_FRAGMENT_SHADER);
     glShaderSource(fragment, 1, &fShaderCode, NULL);
     glCompileShader(fragment);
     checkCompileErrors(fragment, "FRAGMENT");
+    // set the ID of the shader, attach the vertex and fragment to it
     ID = glCreateProgram();
     glAttachShader(ID, vertex);
     glAttachShader(ID, fragment);
     glLinkProgram(ID);
     checkCompileErrors(ID, "PROGRAM");
+    // cleanup
     glDeleteShader(vertex);
     glDeleteShader(fragment);
 }
 
+// user shader
 void Shader::use() 
 { 
     glUseProgram(ID); 
 }
-
+// function to set uniform variables of various types
 void Shader::setBool(const std::string &name, bool value) const
 {         
     glUniform1i(glGetUniformLocation(ID, name.c_str()), (int)value); 
@@ -67,7 +74,6 @@ void Shader::setFloat(const std::string &name, float value) const
     glUniform1f(glGetUniformLocation(ID, name.c_str()), value); 
 }
 
-// ...existing code...
 
 void Shader::setVec2(const std::string &name, const glm::vec2 &value) const
 { 
@@ -112,7 +118,7 @@ void Shader::setMat4(const std::string &name, const glm::mat4 &mat) const
 }
 
 
-
+//check for compile errors
 void Shader::checkCompileErrors(unsigned int shader, std::string type)
 {
     int success;

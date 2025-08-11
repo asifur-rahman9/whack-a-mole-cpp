@@ -23,14 +23,15 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, vec3 norm, int li
 
 void main()
 {
-    
+    //ambient is the same for all particles
     vec3 ambient = ambientStrength * lightColor;
 
-    // diffuse 
+    
     vec3 diffuse = vec3(0.0f);
     vec3 specular = vec3(0.0f);
     vec3 norm = normalize(Normal);
 
+    //for each light calculate the diffuse and specular, add them
     for(int i = 0; i < lightNo; i++){
         
         vec3 lightDir = normalize(lightPos[i] - FragPos);
@@ -50,6 +51,7 @@ void main()
         specular += specularStrength * spec * lightColor * attenuation;  
     }
 
+    // correct for multiple light sources
     diffuse = diffuse / 8.f;
     specular = specular / 10.f;
 
@@ -57,7 +59,7 @@ void main()
     float[5] shadow;
     float shadowAvg = 0;
 
-
+    // calculate if the pixel is in shadow for each of the five shadow buffers
     for(int i = 0; i < 5; i++){
         shadDir[i] = normalize(lightPos[i] - FragPos);
         vec4 fragPosLightSpace = lightSpaceMatrix[i] * vec4(FragPos, 1.0);
@@ -66,6 +68,7 @@ void main()
 
     }
     
+    // correct for multiple shadows
     shadowAvg /= 3;
     
 
@@ -73,7 +76,6 @@ void main()
     
     vec3 lighting = ambient + (1.0 - shadowAvg) * (diffuse + specular);
     vec4 result = vec4(lighting, alpha);
-    FragColor = result * textureColor;
     FragColor = result * textureColor;
 }
 
@@ -88,9 +90,10 @@ float ShadowCalculation(vec4 fragPosLightSpace, vec3 lightDir, vec3 norm, int li
     // Current fragment depth from light's perspective
     float currentDepth = projCoords.z;
     // Shadow if current depth > closest depth
-    //float bias = max(0.05 * (1.0 - dot(norm, lightDir)), 0.005); 
-    float shadow = currentDepth - 0.001 > closestDepth ? 1.0 : 0.0;
+     
+    float shadow = currentDepth - 0.003 > closestDepth ? 1.0 : 0.0;
 
+    // area outside of the shadow map have no shadow
     if(projCoords.z > 1.0)
         shadow = 0.0;
 

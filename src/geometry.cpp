@@ -15,7 +15,7 @@ const vec3 normals[] = {
 
 // Textured Cube model with position, color, UV, and normal
 const TexturedColoredNormalVertex texturedCubeVertexArray[] = {
-    // left - red
+    // left
     TexturedColoredNormalVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 0.0f), normals[0]),
     TexturedColoredNormalVertex(vec3(-0.5f, -0.5f, 0.5f),  vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 1.0f), normals[0]),
     TexturedColoredNormalVertex(vec3(-0.5f, 0.5f, 0.5f),   vec3(1.0f, 0.0f, 0.0f), vec2(1.0f, 1.0f), normals[0]),
@@ -24,7 +24,7 @@ const TexturedColoredNormalVertex texturedCubeVertexArray[] = {
     TexturedColoredNormalVertex(vec3(-0.5f, 0.5f, 0.5f),   vec3(1.0f, 0.0f, 0.0f), vec2(1.0f, 1.0f), normals[0]),
     TexturedColoredNormalVertex(vec3(-0.5f, 0.5f, -0.5f),  vec3(1.0f, 0.0f, 0.0f), vec2(1.0f, 0.0f), normals[0]),
 
-    // far - blue
+    // far
     TexturedColoredNormalVertex(vec3(0.5f, 0.5f, -0.5f),   vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f), normals[1]),
     TexturedColoredNormalVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f), normals[1]),
     TexturedColoredNormalVertex(vec3(-0.5f, 0.5f, -0.5f),  vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f), normals[1]),
@@ -33,7 +33,7 @@ const TexturedColoredNormalVertex texturedCubeVertexArray[] = {
     TexturedColoredNormalVertex(vec3(0.5f, -0.5f, -0.5f),  vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 0.0f), normals[1]),
     TexturedColoredNormalVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f), normals[1]),
 
-    // bottom - turquoise
+    // bottom
     TexturedColoredNormalVertex(vec3(0.5f, -0.5f, 0.5f),   vec3(0.0f, 1.0f, 1.0f), vec2(1.0f, 1.0f), normals[2]),
     TexturedColoredNormalVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f), normals[2]),
     TexturedColoredNormalVertex(vec3(0.5f, -0.5f, -0.5f),  vec3(0.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f), normals[2]),
@@ -41,7 +41,7 @@ const TexturedColoredNormalVertex texturedCubeVertexArray[] = {
     TexturedColoredNormalVertex(vec3(0.5f, -0.5f, 0.5f),   vec3(0.0f, 1.0f, 1.0f), vec2(1.0f, 1.0f), normals[2]),
     TexturedColoredNormalVertex(vec3(-0.5f, -0.5f, 0.5f),  vec3(0.0f, 1.0f, 1.0f), vec2(0.0f, 1.0f), normals[2]),
     TexturedColoredNormalVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f), normals[2]),
-        // near - green
+        // near
     TexturedColoredNormalVertex(vec3(-0.5f, 0.5f, 0.5f),   vec3(0.0f, 1.0f, 0.0f), vec2(0.0f, 1.0f), normals[3]),
     TexturedColoredNormalVertex(vec3(-0.5f, -0.5f, 0.5f),  vec3(0.0f, 1.0f, 0.0f), vec2(0.0f, 0.0f), normals[3]),
     TexturedColoredNormalVertex(vec3(0.5f, -0.5f, 0.5f),   vec3(0.0f, 1.0f, 0.0f), vec2(1.0f, 0.0f), normals[3]),
@@ -50,7 +50,7 @@ const TexturedColoredNormalVertex texturedCubeVertexArray[] = {
     TexturedColoredNormalVertex(vec3(-0.5f, 0.5f, 0.5f),   vec3(0.0f, 1.0f, 0.0f), vec2(0.0f, 1.0f), normals[3]),
     TexturedColoredNormalVertex(vec3(0.5f, -0.5f, 0.5f),   vec3(0.0f, 1.0f, 0.0f), vec2(1.0f, 0.0f), normals[3]),
 
-    // right - purple
+    // right
     TexturedColoredNormalVertex(vec3(0.5f, 0.5f, 0.5f),    vec3(1.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f), normals[4]),
     TexturedColoredNormalVertex(vec3(0.5f, -0.5f, -0.5f),  vec3(1.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f), normals[4]),
     TexturedColoredNormalVertex(vec3(0.5f, 0.5f, -0.5f),   vec3(1.0f, 0.0f, 1.0f), vec2(1.0f, 0.0f), normals[4]),
@@ -59,7 +59,7 @@ const TexturedColoredNormalVertex texturedCubeVertexArray[] = {
     TexturedColoredNormalVertex(vec3(0.5f, 0.5f, 0.5f),    vec3(1.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f), normals[4]),
     TexturedColoredNormalVertex(vec3(0.5f, -0.5f, 0.5f),   vec3(1.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f), normals[4]),
 
-    // top - yellow
+    // top
     TexturedColoredNormalVertex(vec3(0.5f, 0.5f, 0.5f),    vec3(1.0f, 1.0f, 0.0f), vec2(1.0f, 1.0f), normals[5]),
     TexturedColoredNormalVertex(vec3(0.5f, 0.5f, -0.5f),   vec3(1.0f, 1.0f, 0.0f), vec2(1.0f, 0.0f), normals[5]),
     TexturedColoredNormalVertex(vec3(-0.5f, 0.5f, -0.5f),  vec3(1.0f, 1.0f, 0.0f), vec2(0.0f, 0.0f), normals[5]),
@@ -69,56 +69,6 @@ const TexturedColoredNormalVertex texturedCubeVertexArray[] = {
     TexturedColoredNormalVertex(vec3(-0.5f, 0.5f, 0.5f),   vec3(1.0f, 1.0f, 0.0f), vec2(0.0f, 1.0f), normals[5])
 };
 
-
-// Textured Cube model with position, color, and UV coordinates
-const TexturedColoredVertex oldTexturedCubeVertexArray[] = {                                       // position,                            color
-    TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 0.0f)), // left - red
-    TexturedColoredVertex(vec3(-0.5f, -0.5f, 0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 1.0f)),
-    TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(1.0f, 1.0f)),
-
-    TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(0.0f, 0.0f)),
-    TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(1.0f, 1.0f)),
-    TexturedColoredVertex(vec3(-0.5f, 0.5f, -0.5f), vec3(1.0f, 0.0f, 0.0f), vec2(1.0f, 0.0f)),
-
-    TexturedColoredVertex(vec3(0.5f, 0.5f, -0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f)), // far - blue
-    TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f)),
-    TexturedColoredVertex(vec3(-0.5f, 0.5f, -0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f)),
-
-    TexturedColoredVertex(vec3(0.5f, 0.5f, -0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f)),
-    TexturedColoredVertex(vec3(0.5f, -0.5f, -0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(1.0f, 0.0f)),
-    TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f)),
-
-    TexturedColoredVertex(vec3(0.5f, -0.5f, 0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(1.0f, 1.0f)), // bottom - turquoise
-    TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f)),
-    TexturedColoredVertex(vec3(0.5f, -0.5f, -0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(1.0f, 0.0f)),
-
-    TexturedColoredVertex(vec3(0.5f, -0.5f, 0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(1.0f, 1.0f)),
-    TexturedColoredVertex(vec3(-0.5f, -0.5f, 0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(0.0f, 1.0f)),
-    TexturedColoredVertex(vec3(-0.5f, -0.5f, -0.5f), vec3(0.0f, 1.0f, 1.0f), vec2(0.0f, 0.0f)),
-
-    TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(0.0f, 1.0f)), // near - green
-    TexturedColoredVertex(vec3(-0.5f, -0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(0.0f, 0.0f)),
-    TexturedColoredVertex(vec3(0.5f, -0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(1.0f, 0.0f)),
-
-    TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(1.0f, 1.0f)),
-    TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(0.0f, 1.0f)),
-    TexturedColoredVertex(vec3(0.5f, -0.5f, 0.5f), vec3(0.0f, 1.0f, 0.0f), vec2(1.0f, 0.0f)),
-
-    TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f)), // right - purple
-    TexturedColoredVertex(vec3(0.5f, -0.5f, -0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f)),
-    TexturedColoredVertex(vec3(0.5f, 0.5f, -0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(1.0f, 0.0f)),
-
-    TexturedColoredVertex(vec3(0.5f, -0.5f, -0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(0.0f, 0.0f)),
-    TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(1.0f, 1.0f)),
-    TexturedColoredVertex(vec3(0.5f, -0.5f, 0.5f), vec3(1.0f, 0.0f, 1.0f), vec2(0.0f, 1.0f)),
-
-    TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(1.0f, 1.0f)), // top - yellow
-    TexturedColoredVertex(vec3(0.5f, 0.5f, -0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(1.0f, 0.0f)),
-    TexturedColoredVertex(vec3(-0.5f, 0.5f, -0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(0.0f, 0.0f)),
-
-    TexturedColoredVertex(vec3(0.5f, 0.5f, 0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(1.0f, 1.0f)),
-    TexturedColoredVertex(vec3(-0.5f, 0.5f, -0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(0.0f, 0.0f)),
-    TexturedColoredVertex(vec3(-0.5f, 0.5f, 0.5f), vec3(1.0f, 1.0f, 0.0f), vec2(0.0f, 1.0f))};
 
 GLuint loadTexture(const char *filename)
 {
@@ -215,7 +165,7 @@ void setWorldMatrix(int shaderProgram, mat4 worldMatrix)
     glUniformMatrix4fv(worldMatrixLocation, 1, GL_FALSE, &worldMatrix[0][0]);
 }
 
-// loading the maop for the skybox
+// loading the map for the skybox
 unsigned int loadCubemap(vector<std::string> faces)
 {
     unsigned int textureID;

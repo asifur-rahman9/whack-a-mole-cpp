@@ -5,5 +5,5 @@
 
 void main()
 {
-   
+   //shadow fragment is empty
 }

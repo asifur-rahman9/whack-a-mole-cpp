@@ -26,6 +26,7 @@
 #include "camera.hpp"
 #include "shaders.hpp"
 #include "loadObj.hpp"
+#include "particles.hpp"
 
 // Using statements
 using namespace glm;
@@ -33,6 +34,8 @@ using namespace std;
 
 GLuint setupModelVBO(string path, int& vertexCount);
 vector<unsigned int> createShadowBuffer();
+
+
 
 // main function
 int main(int argc, char *argv[])
@@ -68,7 +71,7 @@ int main(int argc, char *argv[])
     }
 
     // Load Textures
-    // GLuint brickTextureID = loadTexture("textures/brick.jpg");
+    
     GLuint grassTextureID = loadTexture("textures/grass.png");
     GLuint woodTextureID = loadTexture("textures/wood.png");
     GLuint cementTopTextureID = loadTexture("textures/cementTop.png");
@@ -83,7 +86,7 @@ int main(int argc, char *argv[])
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
     // Compile and link shaders here ...
-   // Shader colorShader("./shaders/vertexShader.glsl","./shaders/fragmentShader.glsl");
+   \
     Shader textureShader("./shaders/textureVertex.glsl","./shaders/textureFragment.glsl");
     Shader lightShader("./shaders/lightingVertex.glsl","./shaders/lightingFragment.glsl");
     Shader skyboxShader("./shaders/skyboxVertex.glsl","./shaders/skyboxFragment.glsl");
@@ -138,6 +141,9 @@ int main(int argc, char *argv[])
     };
     unsigned int cubemapTexture = loadCubemap(faces);
 
+    //intialize particles
+    ParticleSystem myParticles(vec3(0.0f, 10.0f, 0.0f));
+
 
     // We can set the shader once, since we have only one
     glUseProgram(texturedShaderProgram);
@@ -178,6 +184,7 @@ int main(int argc, char *argv[])
     unsigned int depthMap[LIGHT_NUMBR];
 
 
+    // create a shadow buffer for each light source
     for(int i = 0; i < LIGHT_NUMBR; i++){
         vector<unsigned int> bufferAndMap = createShadowBuffer();
         depthMapFBO[i] = bufferAndMap[0];
@@ -245,13 +252,12 @@ int main(int argc, char *argv[])
         updateGameLogic(newCube, cubeRad, cubeRot, cubeY, millis, baseTime, reset);
 
         //update lighting parameters
-
         vec3* lightPos = setLights(LIGHT_NUMBR, texturedShaderProgram, textureShader, millis, lightingShaderProgram);
 
         // set cameraPosition
         textureShader.setVec3("viewPos", camera.getPosition());
 
-        //render the Shadow map !!
+        //render the Shadow map
         glCullFace(GL_FRONT);
         glViewport(0, 0, SHADOW_WIDTH, SHADOW_HEIGHT);
 
@@ -265,18 +271,18 @@ int main(int argc, char *argv[])
         // for every light source, create the shadow map
         for(int i  = 0; i < LIGHT_NUMBR; i++){
 
-
+            // determine the geometry
             lightProjection = glm::ortho(-100.f, 100.f, -100.f, 100.f, near_plane, far_plane);
             lightView = glm::lookAt(lightPos[i], glm::vec3(5.0f, 0.0f, 5.0f), glm::vec3(0.0, 1.0, 0.0));
             lightSpaceMatrix[i] = lightProjection * lightView;
 
             glBindFramebuffer(GL_FRAMEBUFFER, depthMapFBO[i]);
             glClear(GL_DEPTH_BUFFER_BIT);
-            // 2. Use shadow shader
+            
             shadowShader.use();
             // Set lightSpaceMatrix uniform (projection * view from light's POV)
             shadowShader.setMat4("lightSpaceMatrix", lightSpaceMatrix[i]);
-                    // Render scene with shadow shader
+            // Render scene with shadow shader
             renderScene(grassTextureID, cementTopTextureID, cementBaseTextureID, woodTextureID,
                 metalTextureID, shadowShaderProgram, vao, baseRotation, bicepAngle,
                 forearmAngle, bicepLength, forearmLength, cubeX, cubeY, cubeRad, cubeRot,
@@ -288,11 +294,13 @@ int main(int argc, char *argv[])
 
 
         // Render the entire scene with regular shaders
+
+        // bind back the correct face culling and framebuffer
         glCullFace(GL_BACK);
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-        //
-        // Set projection matrix for shader, this won't change
+        
+        // Set projection matrix for shader
         projectionMatrix = glm::perspective(FIELD_OF_VIEW,                       // field of view in degrees
                                              (float)WINDOW_WIDTH / WINDOW_HEIGHT, // aspect ratio
                                              NEAR_PLANE, FAR_PLANE);              // near and far (near > 0)
@@ -366,10 +374,19 @@ int main(int argc, char *argv[])
             baseTime = millis;
             points = points + 1;
             cout << "Current score: " << points << " points!" << endl;
+            myParticles.origin = cubePosition;
+            myParticles.lifespan = 5.0f;
 
             // initiate swiping motion
 
         }
+
+        // update any particles and render them if needed
+        myParticles.update(dt);
+        if(myParticles.lifespan > 0.001){
+            myParticles.render(lightingShaderProgram, sphereVAO, sphereVertices);
+        }
+        
 
 
 
@@ -384,8 +401,7 @@ int main(int argc, char *argv[])
         // Handle camera input and movement using the camera object
         camera.handleInput(window, dt);
 
-        //Handle robotic arm controls
-        //handleRobotArmInput(window, bicepAngle, forearmAngle, baseRotation);
+        
 
         // Update hammer automation
         updateHammerMovement(hammerController, camera.getPosition(),
@@ -395,6 +411,7 @@ int main(int argc, char *argv[])
         camera.updateViewMatrix(texturedShaderProgram);
         camera.updateViewMatrix(lightingShaderProgram);
     }
+    //output points
     cout << "Total points: " << points << "!!" << endl;
 
     // Shutdown GLFW
@@ -455,15 +472,16 @@ GLuint setupModelVBO(string path, int& vertexCount) {
   glEnableVertexAttribArray(2);
 
   glBindVertexArray(0);
-  // Unbind VAO (it's always a good thing to unbind any buffer/array to prevent
-  // strange bugs, as we are using multiple VAOs)
+
   vertexCount = vertices.size();
   return VAO;
 }
 
 vector<unsigned int> createShadowBuffer(){
 
+    
     const unsigned int SHADOW_WIDTH = 1024, SHADOW_HEIGHT = 1024;
+    // create frame buffer object
     unsigned int depthMapFBO;
     glGenFramebuffers(1, &depthMapFBO);
     // create depth texture

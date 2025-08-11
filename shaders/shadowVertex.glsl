@@ -11,5 +11,6 @@ uniform mat4 worldMatrix;
 
 void main()
 {
+    // transform to light source viewpoint
     gl_Position = lightSpaceMatrix * worldMatrix * vec4(aPos, 1.0);
 }

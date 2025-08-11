@@ -52,7 +52,7 @@ void Camera::handleInput(GLFWwindow *window, float deltaTime)
     const float lookSensitivity = 0.1f;
     if (firstPerson)
     {
-        horizontalAngle += dx * lookSensitivity; // Changed from -= to +=
+        horizontalAngle += dx * lookSensitivity; 
         verticalAngle -= dy * lookSensitivity;
 
         // Clamp vertical angle to prevent flipping
@@ -70,6 +70,7 @@ void Camera::handleInput(GLFWwindow *window, float deltaTime)
     sideVector = normalize(sideVector);
 
     // WASD movement
+    // if player is knocked back or jumping they can't change their velocity
     if(knockedBack == false){
         if(jump == false){
             if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -92,20 +93,10 @@ void Camera::handleInput(GLFWwindow *window, float deltaTime)
 
     }
 
-    //if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
-        //position += up * currentSpeed * deltaTime;
-
-    //if (glfwGetKey(window, GLFW_KEY_C) == GLFW_PRESS)
-        //position -= up * currentSpeed * deltaTime;
-
 
     if(position.y > PLAYER_HEIGHT){
         //they've jumped
         velocity = velocity + gravity * deltaTime;
-        //float horSpeed = sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
-        //velocity.x = lookAt.x * horSpeed;
-        //velocity.z = lookAt.z * horSpeed;
-
 
     } else if(position.y <= PLAYER_HEIGHT){
         //they're on the ground
@@ -116,18 +107,22 @@ void Camera::handleInput(GLFWwindow *window, float deltaTime)
         jump = false;
     }
 
+    // space allows the player to jump
     if ((glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) && position.y == PLAYER_HEIGHT)
     {
+        //add a verticle velocity componenet while mainting their horizontal movement
         velocity.y =  velocity.y + jumpSpeed;
         velocity = velocity + (vec3(lookAt.x, 0.0f, lookAt.z) * keyVelocity);
         jump = true;
 
     }
 
+    // update position based on velocity, update velocity based on friction
     position = position + (velocity * deltaTime);
     velocity.x = 0.98 * velocity.x;
     velocity.z = 0.98 * velocity.z;
 
+    // the player is not able to move until their knockback velocity has decreased
     if(knockedBack == true){
         if(length(velocity) < 3.0f){
             knockedBack = false;
@@ -136,6 +131,7 @@ void Camera::handleInput(GLFWwindow *window, float deltaTime)
 
 }
 
+// the player gets knocked away from the hammer if hit by the hammer
 void Camera::knockBack(vec3 hammerPosition){
     if(knockedBack == false){
         vec3 knockbackDirection = normalize(position - hammerPosition);

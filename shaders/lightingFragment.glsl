@@ -6,5 +6,6 @@ uniform float alpha = 0.6f;
 
 void main()
 {
+    // light sources have a plain yellowish colour
     FragColor = vec4(0.95, 0.95, 0.9, alpha);
 }

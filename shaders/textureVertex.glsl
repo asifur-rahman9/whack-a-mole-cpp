@@ -15,6 +15,7 @@ out vec3 FragPos;
 
 void main()
 {
+    //transform vertices according to view matrix, send colour and texture coordinates through
     vertexColor = aColor;
     mat4 modelViewProjection = projectionMatrix * viewMatrix * worldMatrix;
     Normal = mat3(transpose(inverse(worldMatrix))) * aNormal;  

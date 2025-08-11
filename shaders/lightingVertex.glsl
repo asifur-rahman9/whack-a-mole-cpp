@@ -9,6 +9,7 @@ uniform mat4 projectionMatrix = mat4(1.0);
 out vec3 vertexColor;
 void main()
 {
+    //light sources are transformed, colour is passed through
     vertexColor = aColor;
     mat4 modelViewProjection = projectionMatrix * viewMatrix * worldMatrix;
     gl_Position = modelViewProjection * vec4(aPos.x, aPos.y, aPos.z, 1.0);

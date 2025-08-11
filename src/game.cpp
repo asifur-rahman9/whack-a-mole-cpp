@@ -51,7 +51,6 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
                  GLuint treeVAO, int treeVertices, bool isShadow)
 {
     // Enable our texture shader program, set the texture location, bind the texture
-
     glActiveTexture(GL_TEXTURE0);
     GLuint textureLocation = glGetUniformLocation(texturedShaderProgram, "textureSampler");
     glBindTexture(GL_TEXTURE_2D, grassTextureID);
@@ -82,7 +81,7 @@ void renderScene(GLuint grassTextureID, GLuint cementTopTextureID, GLuint cement
     glDrawArrays(GL_TRIANGLES, 0, cubeVertices);
 
     if(!isShadow){
-        // Render grass
+        // Render grass but not for shadows because it looks weird
         renderGrass(grassTextureID, texturedShaderProgram, grass1VAO, grass1Vertices, grass2VAO, grass2Vertices);
 
 
@@ -139,9 +138,8 @@ void renderLights(int lightVAO, int lightShadingProgram, int sphereVertices, vec
 }
 
 vec3* setLights(int LIGHT_NUMBR, int texturedShaderProgram, Shader textureShader, unsigned long millis, int lightingShaderProgram){
-            //update lighting parameters
+        //update lighting parameters
         glUseProgram(texturedShaderProgram);
-        //const int LIGHT_NUMBR = 5;
         textureShader.setInt("lightNo", LIGHT_NUMBR);
         float lightRad[LIGHT_NUMBR];
         float val =  (float)((millis / 10) % 3600);
@@ -169,7 +167,7 @@ vec3* setLights(int LIGHT_NUMBR, int texturedShaderProgram, Shader textureShader
 }
 
 void drawLights(int LIGHT_NUMBR, int lightingShaderProgram, GLuint sphereVAO, int sphereVertices, vec3* lightPos, int texturedShaderProgram, Shader textureShader){
-
+    // render each life usinf the lighhting shader program, set the position in the texture shader program
     for(int i = 0; i < LIGHT_NUMBR; i++){
             glUseProgram(lightingShaderProgram);
             renderLights(sphereVAO, lightingShaderProgram, sphereVertices, lightPos[i]);
@@ -182,35 +180,32 @@ void drawLights(int LIGHT_NUMBR, int lightingShaderProgram, GLuint sphereVAO, in
 }
 
 void renderSkybox(Camera camera, int skyboxShaderProgram, Shader skyboxShader, glm::mat4 projectionMatrix, unsigned int skyboxVAO, unsigned int cubemapTexture){
+    // set the view to the camera position and view
     glm::mat4 skyView = glm::mat4(glm::mat3(camera.getViewMatrix()));
-        glDepthFunc(GL_LEQUAL);
-        glDepthMask(GL_FALSE);
+    // disable the depth mask
+    glDepthFunc(GL_LEQUAL);
+    glDepthMask(GL_FALSE);
 
-        glUseProgram(skyboxShaderProgram);
-        skyboxShader.setMat4("view", skyView);
-        skyboxShader.setMat4("projection", projectionMatrix);
-        skyboxShader.setInt("skybox", 0);
+    //use skybox shader and set the appropriate parameters
+    glUseProgram(skyboxShaderProgram);
+    skyboxShader.setMat4("view", skyView);
+    skyboxShader.setMat4("projection", projectionMatrix);
+    skyboxShader.setInt("skybox", 0);
 
-        glBindVertexArray(skyboxVAO);
-        glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
-        glDrawArrays(GL_TRIANGLES, 0, 36);
+    //bind skyboxVAO, set the correct texture and draw
+    glBindVertexArray(skyboxVAO);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, cubemapTexture);
+    glDrawArrays(GL_TRIANGLES, 0, 36);
 
-        glDepthMask(GL_TRUE);
-        glDepthFunc(GL_LESS);
+    //return the depth values to normal
+    glDepthMask(GL_TRUE);
+    glDepthFunc(GL_LESS);
 
 }
 
-// Check collision between hammer and cube
-// bool checkCollision(vec3 hammerWorldPos, vec3 cubePosition, float baseRotation)
-// {
-//     float distanceX = abs(hammerWorldPos.x - cubePosition.x);
-//     float distanceY = abs(hammerWorldPos.y - cubePosition.y);
-//     float distanceZ = abs(hammerWorldPos.z - cubePosition.z);
 
-//     return (distanceX < (4.0f * sin(baseRotation) + 1) && distanceY < 4.0f && distanceZ < (4.0f * cos(baseRotation) + 1));
-// }
-
+//check if the player has cause the camera
 bool checkCatch(vec3 cameraWorld, vec3 lookAt, vec3 cubePosition){
     vec3 viewPoint = cameraWorld - lookAt;
 
@@ -234,16 +229,17 @@ bool checkHammerHitsPlayer(vec3 hammerWorldPos, vec3 playerPosition){
     return distance < 5.0f;
 }
 
-
+// render the grass models
 void renderGrass(GLuint grassTextureID, int texturedShaderProgram,
                  GLuint grass1VAO, int grass1Vertices,
                  GLuint grass2VAO, int grass2Vertices)
 {
     if (grass1VAO == 0) return;
 
+    // bind grass texture
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, grassTextureID);
-    const int RANGE = 160;
+    const int RANGE = 160;  // this sets distance to which we render grass
 
     for (int x = 0; x < RANGE; x++) {
         for (int z = 0; z < RANGE; z++) {
@@ -275,6 +271,7 @@ void renderGrass(GLuint grassTextureID, int texturedShaderProgram,
     glUniform1f(glGetUniformLocation(texturedShaderProgram, "alpha"), 1.0f);
 }
 
+//render the trees
 void renderTrees(GLuint grassTextureID, int texturedShaderProgram, GLuint treeVAO, int treeVertices)
 {
     if (treeVAO == 0) return;

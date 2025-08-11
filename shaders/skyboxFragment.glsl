@@ -7,5 +7,6 @@ uniform samplerCube skybox;
 
 void main()
 {    
+    // render skybox darker than actual texture
     FragColor = vec4(0.25, 0.2, 0.4, 0.4) * texture(skybox, TexCoords);
 }
