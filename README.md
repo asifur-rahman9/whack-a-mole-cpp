@@ -1,8 +1,3 @@
-Elizabeth O'Meara 40065959
-
-Asifur Rahman 40194283
-
-
 # cppGraphics
 A C++ OpenGL project for COMP371 that renders a target catching game with a hammer and target cube. Project was done on MacOS
 
