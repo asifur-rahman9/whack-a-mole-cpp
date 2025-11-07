@@ -1,4 +1,4 @@
-# cppGraphics
+# whack-a-mole-cpp
 A C++ OpenGL project for COMP371 that renders a target catching game with a hammer and target cube. Project was done on MacOS
 
 ## Features
